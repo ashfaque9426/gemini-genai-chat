@@ -1,32 +1,15 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import PromptTextField from "../FieldInput/PromptTextField";
+import { v4 as uuidv4 } from 'uuid';
+import { ImStop } from "react-icons/im";
 
 export default function ChatComp() {
-  const [output, setOutput] = useState("");
+  const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
+  const [dBtnDisabled, setdBtnDisabled] = useState(true);
 
-  async function send() {
-    setOutput("");
-
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      body: JSON.stringify({
-        messages: [{ role: "user", content: "Explain RAG simply" }]
-      })
-    });
-
-    const reader = res.body!.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      setOutput(prev => prev + chunk);
-    }
-  }
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   function field_cng_event(e: React.FormEvent<HTMLTextAreaElement>) {
     const userPrompt = (e.target as HTMLTextAreaElement).value || "";
@@ -34,16 +17,85 @@ export default function ChatComp() {
   }
 
   async function sendUserPrompt() {
-    console.log(userPrompt);
-    setUserPrompt("");
+    if (!dBtnDisabled) return;
+    abortControllerRef.current?.abort();
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setConversations(prev => [
+      ...prev,
+      { role: "user", content: userPrompt },
+      { role: "assistant", content: "" }
+    ]);
+
+    setdBtnDisabled(false);
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        body: JSON.stringify({
+          messages: conversations
+        }),
+        signal: controller.signal
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      if (!res.body) {
+        throw new Error("No response body");
+      }
+
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let resStr = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        resStr += chunk;
+
+        setConversations(prev => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            ...updated[updated.length - 1],
+            content: resStr,
+          };
+          return updated;
+        });
+      }
+
+    } catch (err) {
+      const isAbort = err instanceof DOMException && err.name === "AbortError" || err instanceof Error && err.name === "AbortError";
+      if (isAbort) {
+        setConversations(prev => prev.slice(0, -2));
+        abortControllerRef.current = null;
+        console.log("Generation aborted by user");
+      } else {
+        console.error("Generate Error Response:", err);
+      }
+    } finally {
+      abortControllerRef.current = null;
+      setdBtnDisabled(true);
+    }
   }
 
   return (
     <div className="w-[90%] 2xl:w-1/2 h-full mx-auto relative">
-      <button className="px-1.5 py-0.5 my-5 text-lg text-white font-semibold cursor-pointer bg-blue-400 rounded-lg" onClick={send}>Send</button>
-      <pre className="text-wrap h-[87%] overflow-y-auto">{output}</pre>
-      
-      <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-50 bottom-5 w-full" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
+      <div className="h-[87%] overflow-y-auto no-scrollbar">
+        {
+          conversations.length > 0 ? conversations.map(messages => <pre key={uuidv4()} className={messages.role === "user" ? "text-wrap border-gray-500 p-3" : "text-wrap"}>{messages.content}</pre>) : <div className="w-full h-full flex justify-center items-center">
+            <p className="text-3xl font-semibold">What can I help you with?</p>
+          </div>
+        }
+      </div>
+
+      <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
+      <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
     </div>
   );
 }
