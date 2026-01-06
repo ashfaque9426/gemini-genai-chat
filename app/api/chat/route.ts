@@ -16,6 +16,12 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(req: Request): Promise<Response> {
   const { messages }: ChatRequestBody = await req.json();
+  const sysPrompt = {
+    role: "system",
+    content: "You are a helpful assistant."
+  }
+  
+  const messageArr = [sysPrompt, ...messages];
 
   const last = messages.at(-1);
   if (!last || last.role !== "user") throw new Error("Invalid state");
@@ -26,7 +32,7 @@ export async function POST(req: Request): Promise<Response> {
 
   try {
     const result = await model.generateContentStream({
-      contents: messages.map((m: ChatMessage) => ({
+      contents: messageArr.map((m: ChatMessage) => ({
         role: m.role,
         parts: [{ text: m.content }]
       }))
