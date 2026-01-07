@@ -4,8 +4,13 @@ import PromptTextField from "../FieldInput/PromptTextField";
 import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
 import MarkdownRenderer from "./MarkDownRenderer";
+import cn from "@/utils/clsx";
 
-export default function ChatComp() {
+type chatCompTypes = {
+    chatCompStyles?: string
+}
+
+export default function ChatComp({ chatCompStyles }: chatCompTypes) {
   const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
@@ -33,6 +38,7 @@ export default function ChatComp() {
     const arrayToSend = [...conversations, { role: "user", content: userPrompt }];
 
     setdBtnDisabled(false);
+    setUserPrompt("");
 
     try {
       const res = await fetch("/api/chat", {
@@ -50,8 +56,6 @@ export default function ChatComp() {
       if (!res.body) {
         throw new Error("No response body");
       }
-
-      setUserPrompt("");
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
@@ -89,7 +93,7 @@ export default function ChatComp() {
   }
 
   return (
-    <div className="w-[90%] 2xl:w-1/2 h-full mx-auto relative">
+    <div className={cn("relative", chatCompStyles)}>
       <div className="h-[87%] overflow-y-auto no-scrollbar">
         {
           conversations.length > 0 ? conversations.map(message => message.role === "user" ? <pre key={`user-prompt${uuidv4()}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${uuidv4()}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">

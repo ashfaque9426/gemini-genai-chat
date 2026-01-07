@@ -1,9 +1,16 @@
+import Header from '@/_components/ChatComp/Header';
 import ChatComp from '../_components/ChatComp/ChatComp';
+// import AsideBar from '@/_components/ChatComp/AsideBar';
 
 export default function Home() {
   return (
-    <main role="main" className='h-screen'>
-      <ChatComp />
-    </main>
+    <>
+      <Header />
+      <main role="main" className='h-[90vh]'>
+        
+        {/* <AsideBar asidebarStyles='w-[15%] border' /> */}
+        <ChatComp chatCompStyles='w-[90%] 2xl:w-1/2 h-full mx-auto' />
+      </main>
+    </>
   );
 }
