@@ -1,10 +1,10 @@
 import mongoose, { Schema, Model } from "mongoose";
 
-export interface UserDocType {
+interface UserDocType {
     uid: string;
     userName: string;
     userEmail: string;
-    photoURL: string;
+    photoURL: string | null;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -24,7 +24,7 @@ const UserSchema: Schema<UserDocType> = new Schema<UserDocType>(
                 message: 'Invalid email address'
             },
         },
-        photoURL: { type: String, required: true },
+        photoURL: { type: String, default: null },
     },
     { timestamps: true }
 );

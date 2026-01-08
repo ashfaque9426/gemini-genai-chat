@@ -1,6 +1,6 @@
 import mongoose, { Schema, Model } from "mongoose";
 
-export interface ConversationDoc {
+interface ConversationDoc {
   uid: string;
   title?: string;
   createdAt?: Date;

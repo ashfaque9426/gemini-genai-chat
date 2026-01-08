@@ -2,7 +2,7 @@ import mongoose, { Schema, Model, Types } from "mongoose";
 
 export type ChatRole = "user" | "assistant";
 
-export interface MessageDoc {
+interface MessageDoc {
   conversationId: Types.ObjectId;
   uid: string;
   role: ChatRole;
