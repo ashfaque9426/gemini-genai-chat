@@ -1,6 +1,6 @@
+"use client"
 import cn from '@/utils/clsx';
-
-type asidebarTypes = {
+interface asidebarTypes {
     asidebarStyles?: string
 }
 

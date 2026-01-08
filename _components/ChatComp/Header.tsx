@@ -1,4 +1,4 @@
-import React from 'react'
+"use client"
 
 function Header() {
   return (
@@ -14,4 +14,4 @@ function Header() {
   )
 }
 
-export default Header
+export default Header;
