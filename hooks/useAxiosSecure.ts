@@ -23,9 +23,14 @@ function useAxiosSecure() {
   useEffect(() => {
     const requestInterceptor = axiosSecure.interceptors.request.use(
       config => {
-        if (accessSecret) {
-          config.headers.Authorization = `Bearer ${accessSecret}`;
+        if (!accessSecret) {
+          const controller = new AbortController();
+          controller.abort();
+          config.signal = controller.signal;
+          throw new axios.CanceledError("No access token available");
         }
+
+        config.headers.Authorization = `Bearer ${accessSecret}`;
         return config;
       }
     );
@@ -33,6 +38,11 @@ function useAxiosSecure() {
     const responseInterceptor = axiosSecure.interceptors.response.use(
       res => res,
       async (error: AxiosError) => {
+        if (axios.isCancel(error)) {
+          console.warn("Request canceled:", error.message);
+          return Promise.reject(error);
+        }
+        
         const originalRequest = error.config as AxiosRequestConfigWithRetry;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
