@@ -1,7 +1,7 @@
 
 "use client"
 import auth from '@/lib/firebase';
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, UserCredential } from 'firebase/auth';
+import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 
 interface AuthContextValues {
@@ -10,8 +10,9 @@ interface AuthContextValues {
     userInfo: UserInfoData | null,
     setUserInfo: (info: UserInfoData) => void,
     accessSecret: string | null,
-    setAccessSecret: (value: string) => void,
     googlePopup: () => Promise<UserCredential>,
+    logOut: () => Promise<void>,
+    setAccessSecret: (value: string) => void
 }
 
 export interface UserInfoData {
@@ -34,13 +35,30 @@ function AuthProvider({ children }: { children: ReactNode }) {
         return signInWithPopup(auth, googleAuthProvider);
     }
 
+    const logOut = () => {
+        setContextLoading(true);
+        setAccessSecret(null);
+        setUserInfo(null);
+        localStorage.setItem('GenAiLoginStatus', "loggedOut");
+        return signOut(auth);
+    }
+
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            const logInStatus = localStorage.getItem('GenAiLoginStatus');
             try {
                 if (currentUser?.uid) {
-                    // axios request
-                    // request for refresh-token/access-token(with expiry period)
+                    let token;
+                    if (logInStatus && logInStatus === "loggedIn") {
+                        // refresh access token
+                        token = "";
+                    } else {
+                        // request for refresh-token/access-token
+                        token = "";
+                    }
+                    
                     // get the refresh token in browser http cookie and the access token in the cookie storage.
+                    if (token) setAccessSecret(token);
                     const userInfo = {
                         uid: currentUser.uid,
                         userName: currentUser.displayName || "Anonymous",
@@ -48,6 +66,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         photoURL: currentUser.photoURL
                     }
                     setUserInfo(userInfo);
+                    localStorage.setItem('GenAiLoginStatus', "loggedIn");
                 }
             }
             catch (err) {
@@ -62,7 +81,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, setAccessSecret, googlePopup }}>{children}</AuthContext>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, logOut, setAccessSecret }}>{children}</AuthContext>
     )
 }
 
