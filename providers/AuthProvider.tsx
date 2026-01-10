@@ -9,7 +9,9 @@ interface AuthContextValues {
     setContextLoading: (value: boolean) => void,
     userInfo: UserInfoData | null,
     setUserInfo: (info: UserInfoData) => void,
-    googlePopup: () => Promise<UserCredential>
+    accessSecret: string | null,
+    setAccessSecret: (value: string) => void,
+    googlePopup: () => Promise<UserCredential>,
 }
 
 export interface UserInfoData {
@@ -25,24 +27,34 @@ const googleAuthProvider = new GoogleAuthProvider();
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
+    const [accessSecret, setAccessSecret] = useState<string | null>(null);
 
     const googlePopup = () => {
         setContextLoading(true);
         return signInWithPopup(auth, googleAuthProvider);
     }
 
-    useEffect(()=> {
-        const unsubscribe = onAuthStateChanged(auth, currentUser => {
-            if(currentUser?.uid) {
-                const userInfo = {
-                    uid: currentUser.uid,
-                    userName: currentUser.displayName || "Anonymous",
-                    userEmail: currentUser.email,
-                    photoURL: currentUser.photoURL
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+            try {
+                if (currentUser?.uid) {
+                    // axios request
+                    // request for refresh-token/access-token(with expiry period)
+                    // get the refresh token in browser http cookie and the access token in the cookie storage.
+                    const userInfo = {
+                        uid: currentUser.uid,
+                        userName: currentUser.displayName || "Anonymous",
+                        userEmail: currentUser.email,
+                        photoURL: currentUser.photoURL
+                    }
+                    setUserInfo(userInfo);
                 }
-                setUserInfo(userInfo);
-                // request for refresh-token/access-token(with expiry period)
-                // get the refresh token in browser http cookie and the access token in the cookie storage.
+            }
+            catch (err) {
+                console.error("Auth token retrieval failed:", err);
+            }
+            finally {
+                setContextLoading(false);
             }
         });
 
@@ -50,7 +62,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, googlePopup }}>{children}</AuthContext>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, setAccessSecret, googlePopup }}>{children}</AuthContext>
     )
 }
 

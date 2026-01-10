@@ -7,10 +7,11 @@ import MarkdownRenderer from "./MarkDownRenderer";
 import cn from "@/utils/clsx";
 
 type chatCompTypes = {
-    chatCompStyles?: string
+  chatCompStyles?: string,
+  contextLoading: boolean
 }
 
-export default function ChatComp({ chatCompStyles }: chatCompTypes) {
+export default function ChatComp({ chatCompStyles, contextLoading }: chatCompTypes) {
   const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
@@ -94,16 +95,23 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
 
   return (
     <div className={cn("relative", chatCompStyles)}>
-      <div className="h-[87%] overflow-y-auto no-scrollbar">
-        {
-          conversations.length > 0 ? conversations.map(message => message.role === "user" ? <pre key={`user-prompt${uuidv4()}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${uuidv4()}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">
-            <p className="text-3xl font-semibold">What can I help you with?</p>
+      {
+        !contextLoading ? <>
+          <div className="h-[87%] overflow-y-auto no-scrollbar">
+            {
+              conversations.length > 0 ? conversations.map(message => message.role === "user" ? <pre key={`user-prompt${uuidv4()}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${uuidv4()}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">
+                <p className="text-3xl font-semibold">What can I help you with?</p>
+              </div>
+            }
           </div>
-        }
-      </div>
 
-      <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
-      <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+          <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
+          <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+        </> : <div className="h-full flex justify-center items-center">
+          <p>Loading...</p>
+        </div>
+      }
+
     </div>
   );
 }
