@@ -35,9 +35,11 @@ export async function POST(req: Request) {
     }
     catch (err) {
         let message = 'Server error occurred from /api/user-secrets. Err:';
+        let statusCode = 500;
         if (err instanceof Error) {
             message += err.message;
         }
-        return NextResponse.json({ message }, { status: 400 });
+        if (message.includes("required")) statusCode = 400;
+        return NextResponse.json({ message }, { status: statusCode });
     }
 }

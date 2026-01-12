@@ -28,9 +28,11 @@ export async function POST(req: NextRequest) {
     }
     catch (err) {
         let message = 'Server error occurred from /api/refresh. Err:';
+        let statusCode = 500;
         if (err instanceof Error) {
             message += err.message;
         }
-        return NextResponse.json({ message }, { status: 400 });
+        if (message.includes("required")) statusCode = 400;
+        return NextResponse.json({ message }, { status: statusCode });
     }
 }
