@@ -35,12 +35,17 @@ function AuthProvider({ children }: { children: ReactNode }) {
         return signInWithPopup(auth, googleAuthProvider);
     }
 
-    const logOut = () => {
-        setContextLoading(true);
-        setAccessSecret(null);
-        setUserInfo(null);
-        localStorage.setItem('GenAiLoginStatus', "loggedOut");
-        return signOut(auth);
+    const logOut = async () => {
+        try {
+            await signOut(auth);
+            setContextLoading(true);
+            setAccessSecret(null);
+            setUserInfo(null);
+            localStorage.setItem('GenAiLoginStatus', "loggedOut");
+        } catch (err) {
+            const errMsg = err instanceof Error ? err.message : "error occurred during user logout";
+            console.log(errMsg);
+        }
     }
 
     useEffect(() => {
