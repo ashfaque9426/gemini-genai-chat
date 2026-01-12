@@ -1,6 +1,7 @@
 
 "use client"
 import auth from '@/lib/firebase';
+import { loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 
@@ -41,7 +42,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
             setContextLoading(true);
             setAccessSecret(null);
             setUserInfo(null);
-            localStorage.setItem('GenAiLoginStatus', "loggedOut");
+            localStorage.setItem(loginStatusLsStr, "loggedOut");
+            localStorage.removeItem(lsUserInfoStr);
         } catch (err) {
             const errMsg = err instanceof Error ? err.message : "error occurred during user logout";
             console.log(errMsg);
@@ -71,7 +73,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         photoURL: currentUser.photoURL
                     }
                     setUserInfo(userInfo);
-                    localStorage.setItem('GenAiLoginStatus', "loggedIn");
+                    localStorage.setItem(loginStatusLsStr, "loggedIn");
+                    localStorage.setItem(lsUserInfoStr, JSON.stringify({ uid: currentUser.uid, userEmail: currentUser.email }));
                 }
             }
             catch (err) {

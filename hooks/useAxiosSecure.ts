@@ -9,6 +9,10 @@ interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
   _retry?: boolean;
 }
 
+interface BackendError {
+  message: string;
+}
+
 const axiosSecure = axios.create({
   baseURL: process.env.NEXT_PUBLIC_BACKEND_URL,
   withCredentials: true,
@@ -44,8 +48,10 @@ function useAxiosSecure() {
         }
         
         const originalRequest = error.config as AxiosRequestConfigWithRetry;
+        const backendData = error.response?.data as BackendError;
+        const backendMessage = backendData?.message;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry && backendMessage === "Authorization error. Invalid or expired Access Token.") {
           originalRequest._retry = true;
 
           if (isRefreshing.current) {
