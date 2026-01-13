@@ -55,7 +55,17 @@ function AuthProvider({ children }: { children: ReactNode }) {
             const logInStatus = localStorage.getItem('GenAiLoginStatus');
             try {
                 if (currentUser?.uid) {
+                    const idToken = await currentUser.getIdToken(true);
+                    console.log(idToken);
                     let token;
+                    const { creationTime, lastSignInTime } = currentUser.metadata;
+
+                    const isFirstLogin = creationTime === lastSignInTime;
+
+                    if (isFirstLogin) {
+                        // save the user if only it's user's first time login
+                    }
+
                     if (logInStatus && logInStatus === "loggedIn") {
                         // refresh access token
                         token = "";
@@ -63,7 +73,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         // request for refresh-token/access-token
                         token = "";
                     }
-                    
+
                     // get the refresh token in browser http cookie and the access token in the cookie storage.
                     if (token) setAccessSecret(token);
                     const userInfo = {

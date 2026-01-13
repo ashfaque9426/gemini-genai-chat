@@ -1,13 +1,23 @@
 import { signJWTToken } from '@/lib/auth/signToken';
+import { adminAuth } from '@/lib/firebase-admin';
+import { serverError } from '@/utils/utilityFunc/serverError';
 import { NextResponse } from 'next/server';
 
 const isProd = process.env.NODE_ENV === "production";
 
 export async function POST(req: Request) {
     try {
-        const { uid, userEmail } = await req.json();
+        const { userEmail } = await req.json();
+        if (!userEmail) throw new Error('User email is required.');
 
-        if (!uid || !userEmail) throw new Error(`${(!uid && 'google user id') || (!userEmail && 'user email')} is required.`);
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader?.startsWith("Bearer ")) {
+            throw new Error("Missing Firebase Token");
+        }
+        const idToken = authHeader.split("Bearer ")[1];
+
+        const decodedToken = await adminAuth.verifyIdToken(idToken);
+        const uid = decodedToken.uid;
 
         const { refreshToken, accessToken, errMsg } = await signJWTToken(uid, userEmail, "RefreshAccess");
         if (!refreshToken) {
@@ -34,12 +44,7 @@ export async function POST(req: Request) {
         return response;
     }
     catch (err) {
-        let message = 'Server error occurred from /api/user-secrets. Err:';
-        let statusCode = 500;
-        if (err instanceof Error) {
-            message += err.message;
-        }
-        if (message.includes("required")) statusCode = 400;
+        const { message, statusCode } = serverError('Server error occurred from /api/user-secrets.', 'required', 'User not found', 'Missing Firebase Token', 'is expired', err, 400, 404, 401, 401);
         return NextResponse.json({ message }, { status: statusCode });
     }
 }

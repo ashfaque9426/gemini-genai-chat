@@ -13,6 +13,7 @@
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
     "firebase": "^12.7.0",
+    "firebase-admin": "^13.6.0",
     "jsonwebtoken": "^9.0.3",
     "mongodb": "^7.0.0",
     "mongoose": "^9.0.2",
