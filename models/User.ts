@@ -1,11 +1,11 @@
 import mongoose, { Schema, Model } from "mongoose";
 
-export interface UserDocType {
+interface UserDocType {
     uid: string;
     userName: string;
     userEmail: string;
     photoURL: string | null;
-    sessionType: 'googleSignIn',
+    sessionType: string;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -26,7 +26,7 @@ const UserSchema: Schema<UserDocType> = new Schema<UserDocType>(
             },
         },
         photoURL: { type: String, default: null },
-        sessionType: { type: String, required: true }
+        sessionType: { type: String, enum: ['googleSignIn'], required: true }
     },
     { timestamps: true }
 );

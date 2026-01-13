@@ -10,9 +10,9 @@ interface ReturnType {
 export async function signJWTToken(uid: string, userEmail: string, tokenType: 'Access' | 'Refresh' | 'RefreshAccess'): Promise<ReturnType> {
     if (!uid || !userEmail || !tokenType) return { refreshToken: null, accessToken: null, errMsg: `${(!uid && 'uid parameter value') || (!userEmail && 'userEmail parameter value') || (!tokenType && 'tokenType parameter value')} is required.` }
     try {
-        const result = await User.findOne({ uid: uid, userEmail: userEmail });
+        const result = await User.findOne({ uid: uid, userEmail: userEmail }).lean();
         if (!result) {
-            throw new Error('User not found.');
+            throw new Error('User not found in Mongodb. User query made to sign JWT Token.');
         }
         const payload = { uid: result.uid, userEmail: result.userEmail };
         const tokenObj: ReturnType = { refreshToken: null, accessToken: null, errMsg: null };

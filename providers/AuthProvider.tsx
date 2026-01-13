@@ -21,6 +21,7 @@ export interface UserInfoData {
     userName: string | null;
     userEmail: string | null;
     photoURL: string | null;
+    sessionType: string;
 }
 
 const AuthContext = createContext<AuthContextValues | null>(null);
@@ -52,36 +53,39 @@ function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            const logInStatus = localStorage.getItem('GenAiLoginStatus');
+            const logInStatus = localStorage.getItem(loginStatusLsStr);
             try {
                 if (currentUser?.uid) {
                     const idToken = await currentUser.getIdToken(true);
                     console.log(idToken);
+                    const userInfo = {
+                        uid: currentUser.uid,
+                        userName: currentUser.displayName || "Anonymous",
+                        userEmail: currentUser.email,
+                        photoURL: currentUser.photoURL,
+                        sessionType: 'googleSignIn',
+                    }
+
                     let token;
                     const { creationTime, lastSignInTime } = currentUser.metadata;
 
                     const isFirstLogin = creationTime === lastSignInTime;
 
                     if (isFirstLogin) {
-                        // save the user if only it's user's first time login
+                        // idToken required here
+                        // save the user if only it's user's first time login(requires userInfo object)
                     }
 
                     if (logInStatus && logInStatus === "loggedIn") {
-                        // refresh access token
+                        // refresh access token(requires userEmail)
                         token = "";
                     } else {
-                        // request for refresh-token/access-token
+                        // request for refresh-token/access-token(requires idToken)
                         token = "";
                     }
 
                     // get the refresh token in browser http cookie and the access token in the cookie storage.
                     if (token) setAccessSecret(token);
-                    const userInfo = {
-                        uid: currentUser.uid,
-                        userName: currentUser.displayName || "Anonymous",
-                        userEmail: currentUser.email,
-                        photoURL: currentUser.photoURL
-                    }
                     setUserInfo(userInfo);
                     localStorage.setItem(loginStatusLsStr, "loggedIn");
                     localStorage.setItem(lsUserInfoStr, JSON.stringify({ uid: currentUser.uid, userEmail: currentUser.email }));

@@ -1,10 +1,13 @@
 import { signJWTToken } from '@/lib/auth/signToken';
+import connectToDB from '@/lib/mongodb';
 import { verifyJWT } from '@/utils/customMiddleware/verifyJWT';
 import { serverError } from '@/utils/utilityFunc/serverError';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(req: NextRequest) {
     try {
+        await connectToDB();
+
         const { userEmail } = await req.json();
         if (!userEmail) throw new Error('User email is required.');
 
