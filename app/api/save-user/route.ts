@@ -24,8 +24,6 @@ export async function POST(req: Request) {
 
         const firebaseUser = await adminAuth.getUser(uid);
 
-        const imageUrl = photoURL ? photoURL : null;
-
         if (!firebaseUser) {
             throw new Error("User not found in Firebase");
         }
@@ -35,6 +33,8 @@ export async function POST(req: Request) {
         if (userData) {
             return NextResponse.json({ message: "User already exits in the Database." }, { status: 409 });
         }
+
+        const imageUrl = photoURL ? photoURL : null;
 
         await User.create({ uid, userName, userEmail, photoURL: imageUrl, sessionType });
         return NextResponse.json({ message: "User is verified and successfully saved to the database." }, { status: 200 });
