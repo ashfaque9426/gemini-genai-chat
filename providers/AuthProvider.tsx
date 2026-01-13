@@ -80,7 +80,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         // refresh access token(requires userEmail)
                         token = "";
                     } else {
-                        // request for refresh-token/access-token(requires idToken)
+                        // request for refresh-token/access-token(requires idToken, userEmail)
                         token = "";
                     }
 
