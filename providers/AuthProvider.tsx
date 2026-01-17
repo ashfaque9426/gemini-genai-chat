@@ -27,6 +27,10 @@ export interface UserInfoData {
 const AuthContext = createContext<AuthContextValues | null>(null);
 const googleAuthProvider = new GoogleAuthProvider();
 
+googleAuthProvider.setCustomParameters({
+  prompt: "select_account",
+});
+
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
@@ -40,7 +44,6 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const logOut = async () => {
         try {
             await signOut(auth);
-            setContextLoading(true);
             setAccessSecret(null);
             setUserInfo(null);
             localStorage.setItem(loginStatusLsStr, "loggedOut");
@@ -72,14 +75,17 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     const isFirstLogin = creationTime === lastSignInTime;
 
                     if (isFirstLogin) {
+                        console.log("first time logged in triggered.");
                         // idToken required here
                         // save the user if only it's user's first time login(requires userInfo object)
                     }
 
                     if (logInStatus && logInStatus === "loggedIn") {
+                        console.log("local storage logged in status triggered.");
                         // refresh access token(requires userEmail)
                         token = "";
                     } else {
+                        console.log("Not local storage logged in status triggered.");
                         // request for refresh-token/access-token(requires idToken, userEmail)
                         token = "";
                     }
@@ -98,7 +104,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 setContextLoading(false);
             }
         });
-
+        
         return () => unsubscribe();
     }, []);
 

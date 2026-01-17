@@ -5,16 +5,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
 import MarkdownRenderer from "./MarkDownRenderer";
 import cn from "@/utils/clsx";
-
-type chatCompTypes = {
-  chatCompStyles?: string,
-  contextLoading: boolean
+import useAuth from "@/hooks/useAuth";
+import Loading from "./Loading";
+interface chatCompTypes {
+  chatCompStyles?: string;
 }
 
-export default function ChatComp({ chatCompStyles, contextLoading }: chatCompTypes) {
+export default function ChatComp({ chatCompStyles }: chatCompTypes) {
   const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
+
+  const { contextLoading } = useAuth();
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -107,9 +109,7 @@ export default function ChatComp({ chatCompStyles, contextLoading }: chatCompTyp
 
           <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
           <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
-        </> : <div className="h-full flex justify-center items-center">
-          <p>Loading...</p>
-        </div>
+        </> : <Loading defaultIcon={true} loadingIconStyles="text-5xl" />
       }
 
     </div>
