@@ -2,7 +2,7 @@
 import useAuth from "@/hooks/useAuth";
 import Image from "next/image";
 import Link from "next/link";
-import Loading from "./Loading";
+import Loading from "../Loading/Loading";
 
 function Header() {
   const { contextLoading, userInfo, googlePopup, logOut } = useAuth();

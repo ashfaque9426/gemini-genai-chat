@@ -1,4 +1,4 @@
-import Header from '@/_components/ChatComp/Header';
+import Header from '@/_components/Header/Header';
 import ChatComp from '../_components/ChatComp/ChatComp';
 // import AsideBar from '@/_components/ChatComp/AsideBar';
 

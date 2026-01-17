@@ -1,12 +1,12 @@
 "use client";
 import { useState, useRef } from "react";
-import PromptTextField from "../FieldInput/PromptTextField";
+import PromptTextField from "./PromptTextField";
 import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
 import MarkdownRenderer from "./MarkDownRenderer";
 import cn from "@/utils/clsx";
 import useAuth from "@/hooks/useAuth";
-import Loading from "./Loading";
+import Loading from "../Loading/Loading";
 interface chatCompTypes {
   chatCompStyles?: string;
 }
