@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         const userData = await User.findOne({ uid, userEmail }).lean();
 
         if (userData) {
-            return NextResponse.json({ message: "User already exits in the Database." }, { status: 409 });
+            return NextResponse.json({ message: "User already exits in the Database." }, { status: 200 });
         }
 
         const imageUrl = photoURL ? photoURL : null;

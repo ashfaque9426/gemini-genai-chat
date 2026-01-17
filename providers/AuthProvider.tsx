@@ -2,6 +2,7 @@
 "use client"
 import auth from '@/lib/firebase';
 import { loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
+import { saveUser } from '@/utils/utilityFunc/utilityFunc';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 
@@ -78,6 +79,8 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         console.log("first time logged in triggered.");
                         // idToken required here
                         // save the user if only it's user's first time login(requires userInfo object)
+                        const { message } = await saveUser(idToken, userInfo);
+                        console.log(message);
                     }
 
                     if (logInStatus && logInStatus === "loggedIn") {
@@ -94,7 +97,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     if (token) setAccessSecret(token);
                     setUserInfo(userInfo);
                     localStorage.setItem(loginStatusLsStr, "loggedIn");
-                    localStorage.setItem(lsUserInfoStr, JSON.stringify({ uid: currentUser.uid, userEmail: currentUser.email }));
+                    localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: currentUser.email }));
                 }
             }
             catch (err) {
