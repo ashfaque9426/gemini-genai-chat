@@ -3,7 +3,7 @@
 import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { useEffect, useRef } from "react";
 import useAuth from "./useAuth";
-import { refreshAccessToken } from "@/utils/utilityFunc/utilityFunc";
+import { refreshAccessToken } from "@/lib/api/auth.api";
 
 interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
   _retry?: boolean;
@@ -46,7 +46,7 @@ function useAxiosSecure() {
           console.warn("Request canceled:", error.message);
           return Promise.reject(error);
         }
-        
+
         const originalRequest = error.config as AxiosRequestConfigWithRetry;
         const backendData = error.response?.data as BackendError;
         const backendMessage = backendData?.message;
@@ -65,16 +65,27 @@ function useAxiosSecure() {
           isRefreshing.current = true;
 
           try {
-            const newToken = await refreshAccessToken();
-            setAccessSecret(newToken);
+            const { token, message } = await refreshAccessToken();
 
-            originalRequest.headers!.Authorization = `Bearer ${newToken}`;
+            if (!token) {
+              throw new Error(message || "Refresh Token is not a verified refresh token or expired.");
+            }
+
+            setAccessSecret(token);
+
+            originalRequest.headers!.Authorization = `Bearer ${token}`;
 
             pendingRequests.current.forEach(cb => cb());
             pendingRequests.current = [];
 
             return axiosSecure(originalRequest);
           } catch (err) {
+            const errStr = "Refreshing Access token error occured due to invalid or expired refresh token. User Logout function executed.";
+            if (err instanceof Error) {
+              console.error(`${errStr} Err: ${err.message}`);
+            } else {
+              console.error(`${errStr} Err: `, err);
+            }
             await logOut();
             return Promise.reject(err);
           } finally {

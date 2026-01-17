@@ -1,10 +1,12 @@
 
 "use client"
+import { saveUser } from '@/lib/api/user.api';
 import auth from '@/lib/firebase';
 import { loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
-import { saveUser } from '@/utils/utilityFunc/utilityFunc';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
+import { ToastContainer, Bounce } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
 interface AuthContextValues {
     contextLoading: boolean,
@@ -29,7 +31,7 @@ const AuthContext = createContext<AuthContextValues | null>(null);
 const googleAuthProvider = new GoogleAuthProvider();
 
 googleAuthProvider.setCustomParameters({
-  prompt: "select_account",
+    prompt: "select_account",
 });
 
 function AuthProvider({ children }: { children: ReactNode }) {
@@ -79,7 +81,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         console.log("first time logged in triggered.");
                         // idToken required here
                         // save the user if only it's user's first time login(requires userInfo object)
-                        const { message } = await saveUser(idToken, userInfo);
+                        const message = await saveUser(idToken, userInfo);
                         console.log(message);
                     }
 
@@ -107,12 +109,27 @@ function AuthProvider({ children }: { children: ReactNode }) {
                 setContextLoading(false);
             }
         });
-        
+
         return () => unsubscribe();
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, logOut, setAccessSecret }}>{children}</AuthContext>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, logOut, setAccessSecret }}>
+            {children}
+            <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick={false}
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="dark"
+                transition={Bounce}
+            />
+        </AuthContext>
     )
 }
 
