@@ -1,6 +1,7 @@
 import { signJWTToken } from '@/lib/auth/signToken';
 import { adminAuth } from '@/lib/firebase-admin';
 import connectToDB from '@/lib/mongodb';
+import { ACCESS_TOKEN_TTL_MS } from '@/utils/constants/constants';
 import { serverError } from '@/utils/utilityFunc/serverError';
 import { NextResponse } from 'next/server';
 
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
 
         if (errMsg) throw new Error(errMsg);
 
-        const response = NextResponse.json({ accessToken }, { status: 200 });
+        const response = NextResponse.json({ accessToken, expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS }, { status: 200 });
 
         response.cookies.set({
             name: "refreshToken",

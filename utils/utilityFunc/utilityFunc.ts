@@ -1,4 +1,5 @@
 import { Bounce, toast, ToastOptions } from "react-toastify";
+import { lsUserInfoStr } from "../constants/constants";
 
 type ErrorInput = Error | { message?: string } | unknown;
 
@@ -11,6 +12,15 @@ export function clientErrMsg(err: ErrorInput, errStr: string): string {
 
     return message;
 }
+
+export function isAccessTokenValid() {
+  const userInfo = localStorage.getItem(lsUserInfoStr);
+  if (!userInfo) return false;
+  const parsedUserInfo = JSON.parse(userInfo);
+
+  return Date.now() < Number(parsedUserInfo.expiresAt);
+};
+
 
 export function showToastMst(toastType: 'success' | 'error' | 'warning', toastMsg: string) {
     const toastConfig: ToastOptions = {

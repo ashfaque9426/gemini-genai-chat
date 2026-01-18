@@ -1,4 +1,5 @@
 import User from "@/models/User";
+import { ACCESS_EXPIRES } from "@/utils/constants/constants";
 import jwt from "jsonwebtoken";
 
 interface ReturnType {
@@ -17,7 +18,7 @@ export async function signJWTToken(uid: string, userEmail: string, tokenType: 'A
         const payload = { uid: result.uid, userEmail: result.userEmail };
         const tokenObj: ReturnType = { refreshToken: null, accessToken: null, errMsg: null };
         const refreshExpire = '7d';
-        const accessExpire = '3h';
+        const accessExpire = ACCESS_EXPIRES;
 
         if (!process.env.REFRESH_SECRET) {
             throw new Error('REFRESH_SECRET environment variable is not defined.');

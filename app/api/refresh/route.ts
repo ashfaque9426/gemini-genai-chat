@@ -1,5 +1,6 @@
 import { signJWTToken } from '@/lib/auth/signToken';
 import connectToDB from '@/lib/mongodb';
+import { ACCESS_TOKEN_TTL_MS } from '@/utils/constants/constants';
 import { verifyJWT } from '@/utils/customMiddleware/verifyJWT';
 import { serverError } from '@/utils/utilityFunc/serverError';
 import { NextRequest, NextResponse } from 'next/server';
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
             throw new Error("Access token generation failed");
         }
 
-        return NextResponse.json({ accessToken }, { status: 200 });
+        return NextResponse.json({ accessToken, expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS }, { status: 200 });
     }
     catch (err) {
         const { message, statusCode } = serverError('Server error occurred from /api/refresh.', 'required', 'Unauthorized Access', 'Authorization error', 'User not found', err, 400, 401, 401, 404);

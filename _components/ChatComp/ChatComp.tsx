@@ -16,7 +16,7 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
 
-  const { contextLoading } = useAuth();
+  const { contextLoading, userInfo } = useAuth();
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -102,7 +102,9 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
           <div className="h-[87%] overflow-y-auto no-scrollbar">
             {
               conversations.length > 0 ? conversations.map(message => message.role === "user" ? <pre key={`user-prompt${uuidv4()}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${uuidv4()}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">
-                <p className="text-3xl font-semibold">What can I help you with?</p>
+                {
+                  userInfo ? <p className="text-3xl font-semibold">What can I help you with?</p> : <p className="text-3xl font-semibold">Please Login to save your conversation.</p>
+                }
               </div>
             }
           </div>
