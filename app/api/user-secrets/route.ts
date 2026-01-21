@@ -36,8 +36,9 @@ export async function POST(req: Request) {
         }
 
         if (errMsg) throw new Error(errMsg);
+        const expirationTime = Date.now() + ACCESS_TOKEN_TTL_MS;
 
-        const response = NextResponse.json({ accessToken, expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS }, { status: 200 });
+        const response = NextResponse.json({ accessToken, expiresAt: expirationTime }, { status: 200 });
 
         response.cookies.set({
             name: "refreshToken",

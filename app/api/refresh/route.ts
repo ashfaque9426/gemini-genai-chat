@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
             throw new Error("Access token generation failed");
         }
 
-        return NextResponse.json({ accessToken, expiresAt: Date.now() + ACCESS_TOKEN_TTL_MS }, { status: 200 });
+        const expirationTime = Date.now() + ACCESS_TOKEN_TTL_MS;
+
+        return NextResponse.json({ accessToken, expiresAt: expirationTime }, { status: 200 });
     }
     catch (err) {
         const { message, statusCode } = serverError('Server error occurred from /api/refresh.', 'required', 'Unauthorized Access', 'Authorization error', 'User not found', err, 400, 401, 401, 404);

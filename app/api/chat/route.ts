@@ -1,4 +1,6 @@
 
+import { NextRequest } from "next/server";
+import { verifyJWT } from "@/utils/customMiddleware/verifyJWT";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 interface ChatMessage {
@@ -14,17 +16,32 @@ interface ChatRequestBody {
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 
-export async function POST(req: Request): Promise<Response> {
+export async function POST(req: NextRequest): Promise<Response> {
+  const authHeader = req.headers.get("authorization");
+  if (authHeader) {
+    const jwtResult = verifyJWT(req, "Access");
+    if (jwtResult.error) {
+      return new Response(
+        JSON.stringify({ message: jwtResult.message }),
+        {
+          status: jwtResult.status,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+  }
+
   const { messages }: ChatRequestBody = await req.json();
   const sysPrompt = {
     role: "system",
     content: "You are a helpful assistant."
   }
-  
+
   const messageArr = [sysPrompt, ...messages];
 
   const last = messages.at(-1);
   if (!last || last.role !== "user") throw new Error("Invalid state");
+  const lastUserPrompt = last.content;
 
   const model = genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
@@ -39,6 +56,7 @@ export async function POST(req: Request): Promise<Response> {
     });
 
     const encoder = new TextEncoder();
+    let LLMResponseTxt = "";
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let aborted = false;
@@ -54,7 +72,8 @@ export async function POST(req: Request): Promise<Response> {
             if (aborted) break;
 
             const text: string = chunk.text();
-            
+            LLMResponseTxt += text;
+
             if (text) {
               controller.enqueue(encoder.encode(text));
             }
@@ -67,6 +86,11 @@ export async function POST(req: Request): Promise<Response> {
           req.signal.removeEventListener("abort", onAbort);
 
           if (!aborted) {
+            if (authHeader) {
+              console.log("safe place to save LLM response message with latest user prompt to mongodb.");
+              console.log(`Latest User Prompt: ${lastUserPrompt}`);
+              console.log(`Full LLM Response: ${LLMResponseTxt}`);
+            }
             controller.close();
           }
         }
@@ -81,6 +105,6 @@ export async function POST(req: Request): Promise<Response> {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: `Failed to generate content. Err: ${error}` }), { status: 500 });
+    return new Response(JSON.stringify({ error: `Internal server error. Failed to generate content. Err: ${error}` }), { status: 500 });
   }
 }
