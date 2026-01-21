@@ -43,21 +43,32 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
     setdBtnDisabled(false);
     setUserPrompt("");
 
+    const methodObj = {
+      method: "POST",
+      body: JSON.stringify({
+        messages: arrayToSend
+      }),
+      signal: controller.signal
+    }
+
     try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          messages: arrayToSend
-        }),
-        signal: controller.signal
-      });
+      const res = await fetch("/api/chat", methodObj);
 
       if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (userInfo && res.status === 401) {
+          console.log("Access token expired or invalid", data.message);
+          // if user logged in then,
+          // call the refreshAccessToken() here since axios does not support data streaming the way of incremental chunks, if the token is being returned update the auth token state.
+          // if something is wrong and message being returned, update the outter scopped message variable.
+          // if the data.message contains includes that string indicating refresh token is expired call user logOut method here.
+        }
+        // then wrong throw new Error here with the updated message variable.
+        throw new Error(data.message || "Request failed");
       }
 
       if (!res.body) {
-        throw new Error("No response body");
+        throw new Error("No response body found");
       }
 
       const reader = res.body!.getReader();
@@ -90,6 +101,9 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
         console.error("Generate Error Response:", err);
       }
     } finally {
+      // if the user is logged in then, make post request to the api route to save the userPrompt and resStr to mongodb collection(because response streming chunks begins with the returned response with headers from ther server, so cant return the error message from the server endpoint if failed to update the user prompt and LLM response message in mongodb collection).
+
+      // then
       abortControllerRef.current = null;
       setdBtnDisabled(true);
     }

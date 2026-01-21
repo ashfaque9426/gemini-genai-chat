@@ -41,7 +41,6 @@ export async function POST(req: NextRequest): Promise<Response> {
 
   const last = messages.at(-1);
   if (!last || last.role !== "user") throw new Error("Invalid state");
-  const lastUserPrompt = last.content;
 
   const model = genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
@@ -56,7 +55,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
 
     const encoder = new TextEncoder();
-    let LLMResponseTxt = "";
+
     const stream = new ReadableStream<Uint8Array>({
       async start(controller) {
         let aborted = false;
@@ -72,7 +71,6 @@ export async function POST(req: NextRequest): Promise<Response> {
             if (aborted) break;
 
             const text: string = chunk.text();
-            LLMResponseTxt += text;
 
             if (text) {
               controller.enqueue(encoder.encode(text));
@@ -86,11 +84,6 @@ export async function POST(req: NextRequest): Promise<Response> {
           req.signal.removeEventListener("abort", onAbort);
 
           if (!aborted) {
-            if (authHeader) {
-              console.log("safe place to save LLM response message with latest user prompt to mongodb.");
-              console.log(`Latest User Prompt: ${lastUserPrompt}`);
-              console.log(`Full LLM Response: ${LLMResponseTxt}`);
-            }
             controller.close();
           }
         }

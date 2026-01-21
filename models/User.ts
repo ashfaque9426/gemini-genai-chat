@@ -6,6 +6,8 @@ interface UserDocType {
     userEmail: string;
     photoURL: string | null;
     sessionType: string;
+    paymentTire: string;
+    paymentExp: number | null;
     createdAt?: Date;
     updatedAt?: Date;
 }
@@ -26,7 +28,9 @@ const UserSchema: Schema<UserDocType> = new Schema<UserDocType>(
             },
         },
         photoURL: { type: String, default: null },
-        sessionType: { type: String, enum: ['googleSignIn'], required: true }
+        sessionType: { type: String, enum: ['googleSignIn'], required: true },
+        paymentTire: { type: String, enum: ['Free', 'Go', 'Plus', 'Pro'], required: true },
+        paymentExp: { type: Number, default: null }
     },
     { timestamps: true }
 );
