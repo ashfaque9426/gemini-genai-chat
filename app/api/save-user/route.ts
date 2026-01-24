@@ -1,23 +1,31 @@
 import { NextResponse } from "next/server";
-import User from "@/models/User";
+import User, { GoogleImageUrl } from "@/models/User";
 import { adminAuth } from "@/lib/firebase-admin";
 import { serverError } from "@/utils/utilityFunc/serverError";
 import connectToDB from "@/lib/mongodb";
 
+interface ResponseObjType {
+    userName: string;
+    userEmail: string;
+    photoURL: GoogleImageUrl;
+    sessionType: string;
+}
+
 export async function POST(req: Request) {
     try {
-        await connectToDB();
-
-        const { userName, userEmail, photoURL, sessionType } = await req.json();
-        if (!userName || !userEmail || !photoURL || !sessionType) {
-            throw new Error(`${(!userName && 'User Name') || (!userEmail && 'User Email') || (!sessionType && 'Session Type')} is required.`);
-        }
-
         const authHeader = req.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer ")) {
             throw new Error("Authorization error, Missing Firebase Token. Unauthorized Access.");
         }
+
         const idToken = authHeader.split("Bearer ")[1];
+
+        await connectToDB();
+
+        const { userName, userEmail, photoURL, sessionType }: ResponseObjType = await req.json();
+        if (!userName || !userEmail || !sessionType) {
+            throw new Error(`${(!userName && 'User Name') || (!userEmail && 'User Email') || (!sessionType && 'Session Type')} is required.`);
+        }
 
         const decodedToken = await adminAuth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
@@ -34,9 +42,7 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: "User already exits in the Database." }, { status: 200 });
         }
 
-        const imageUrl = photoURL ? photoURL : null;
-
-        await User.create({ uid, userName, userEmail, photoURL: imageUrl, sessionType });
+        await User.create({ uid, userName, userEmail, photoURL, sessionType });
         return NextResponse.json({ message: "User is verified and successfully saved to the database." }, { status: 200 });
 
     } catch (error) {

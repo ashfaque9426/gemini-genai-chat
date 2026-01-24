@@ -1,12 +1,16 @@
 import mongoose, { Schema, Model } from "mongoose";
 
+type GoogleUserContentUrl = `https://lh${number}.googleusercontent.com/${string}` | `http://lh${number}.googleusercontent.com/${string}`;
+export type GoogleImageUrl = GoogleUserContentUrl | null;
+export type PaymentTireType = 'Free' | 'Go' | 'Plus' | 'Pro';
+
 interface UserDocType {
     uid: string;
     userName: string;
     userEmail: string;
-    photoURL: string | null;
+    photoURL: GoogleImageUrl;
     sessionType: string;
-    paymentTire: string;
+    paymentTire: PaymentTireType;
     paymentExp: number | null;
     createdAt?: Date;
     updatedAt?: Date;
@@ -29,7 +33,7 @@ const UserSchema: Schema<UserDocType> = new Schema<UserDocType>(
         },
         photoURL: { type: String, default: null },
         sessionType: { type: String, enum: ['googleSignIn'], required: true },
-        paymentTire: { type: String, enum: ['Free', 'Go', 'Plus', 'Pro'], required: true },
+        paymentTire: { type: String, enum: ['Free', 'Go', 'Plus', 'Pro'], default: 'Free' },
         paymentExp: { type: Number, default: null }
     },
     { timestamps: true }

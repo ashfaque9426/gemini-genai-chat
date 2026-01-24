@@ -2,6 +2,18 @@ import { Bounce, toast, ToastOptions } from "react-toastify";
 import { lsUserInfoStr } from "../constants/constants";
 
 type ErrorInput = Error | { message?: string } | unknown;
+type Email = string & {
+  readonly email: "A valid email address as defined by RFC 5322 (mostly).";
+};
+
+const emailRegex: RegExp = new RegExp(
+  /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+);
+
+export function isValidEmail(email: string): email is Email {
+  return emailRegex.test(email);
+}
+
 
 export function clientErrMsg(err: ErrorInput, errStr: string): string {
     console.error(errStr, err);
