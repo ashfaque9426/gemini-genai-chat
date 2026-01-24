@@ -3,6 +3,7 @@ import User, { GoogleImageUrl } from "@/models/User";
 import { adminAuth } from "@/lib/firebase-admin";
 import { serverError } from "@/utils/utilityFunc/serverError";
 import connectToDB from "@/lib/mongodb";
+import { isValidEmail } from "@/utils/utilityFunc/utilityFunc";
 
 interface ResponseObjType {
     userName: string;
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
         const { userName, userEmail, photoURL, sessionType }: ResponseObjType = await req.json();
         if (!userName || !userEmail || !sessionType) {
             throw new Error(`${(!userName && 'User Name') || (!userEmail && 'User Email') || (!sessionType && 'Session Type')} is required.`);
+        }
+
+        if (!isValidEmail(userEmail)) {
+            throw new Error("Invalid Email, a valid email address is required.");
         }
 
         const decodedToken = await adminAuth.verifyIdToken(idToken);
