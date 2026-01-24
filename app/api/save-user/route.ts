@@ -24,8 +24,8 @@ export async function POST(req: Request) {
         await connectToDB();
 
         const { userName, userEmail, photoURL, sessionType }: ResponseObjType = await req.json();
-        if (!userName || !userEmail || !sessionType) {
-            throw new Error(`${(!userName && 'User Name') || (!userEmail && 'User Email') || (!sessionType && 'Session Type')} is required.`);
+        if (!userName || !userEmail || typeof photoURL === 'undefined'  || !sessionType) {
+            throw new Error(`${(!userName && 'User Name') || (!userEmail && 'User Email') || (!photoURL && 'Photo URL value') || (!sessionType && 'Session Type')} is required.`);
         }
 
         if (!isValidEmail(userEmail)) {
