@@ -34,7 +34,7 @@ export function isAccessTokenValid() {
 };
 
 
-export function showToastMst(toastType: 'success' | 'error' | 'warning', toastMsg: string) {
+export function showToastMsg(toastType: 'success' | 'error' | 'warning' | 'info', toastMsg: string) {
     const toastConfig: ToastOptions = {
         position: "top-right",
         autoClose: 5000,
@@ -53,5 +53,7 @@ export function showToastMst(toastType: 'success' | 'error' | 'warning', toastMs
         toast.error(toastMsg, toastConfig);
     } else if (toastType === 'warning') {
         toast.warn(toastMsg, toastConfig);
+    } else if (toastType === 'info') {
+        toast.info(toastMsg, toastConfig);
     }
 }

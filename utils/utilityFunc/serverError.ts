@@ -9,7 +9,8 @@ export function serverError(msgStr: string, msgKeywords: string, msgKeywords2: s
     let message = msgStr;
     let statusCode = 500;
     if (err instanceof Error) {
-        message += ' Err:' + err.message;
+        message += ' Err: ' + err.message;
+        console.log(err);
     }
     if (msgKeywords.length > 0 && message.includes(msgKeywords)) statusCode = errStatusCode;
     else if (msgKeywords2.length > 0 && message.includes(msgKeywords2)) statusCode = errStatusCode2;

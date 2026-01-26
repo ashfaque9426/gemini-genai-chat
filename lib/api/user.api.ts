@@ -4,7 +4,7 @@ import { clientErrMsg, isValidEmail } from "@/utils/utilityFunc/utilityFunc";
 interface UserInfoData {
     uid: string;
     userName: string;
-    userEmail: string;
+    userEmail: string | null;
     photoURL: GoogleImageUrl;
     sessionType: string;
 }

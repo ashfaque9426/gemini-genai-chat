@@ -1,9 +1,10 @@
 
 "use client"
-// import { saveUser } from '@/lib/api/user.api';
+import { saveUser } from '@/lib/api/user.api';
 import auth from '@/lib/firebase';
+import { GoogleImageUrl } from '@/models/User';
 import { ACCESS_TOKEN_TTL_MS, loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
-import { isAccessTokenValid } from '@/utils/utilityFunc/utilityFunc';
+import { isAccessTokenValid, showToastMsg } from '@/utils/utilityFunc/utilityFunc';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { ToastContainer, Bounce } from 'react-toastify';
@@ -24,7 +25,7 @@ export interface UserInfoData {
     uid: string;
     userName: string | null;
     userEmail: string | null;
-    photoURL: string | null;
+    photoURL: GoogleImageUrl;
     sessionType: string;
     paymentTire: string;
     paymentExp: number | null;
@@ -72,7 +73,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         uid: currentUser.uid,
                         userName: currentUser.displayName || "Anonymous",
                         userEmail: currentUser.email,
-                        photoURL: currentUser.photoURL,
+                        photoURL: currentUser.photoURL as GoogleImageUrl,
                         sessionType: 'googleSignIn',
                     }
 
@@ -86,8 +87,14 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         console.log("first time logged in triggered.");
                         // idToken required here
                         // save the user if only it's user's first time login(requires userInfo object)
-                        // const message = await saveUser(idToken, userInfo);
-                        // console.log(message);
+                        showToastMsg('info', "Please wait until user profile creation process in done in DB");
+                        const message = await saveUser(idToken, userInfo);
+                        if (message.includes("successfully")) {
+                            showToastMsg('success', message);
+                        } else {
+                            console.error(message);
+                        }
+                        
                     }
 
                     if (logInStatus && logInStatus === "loggedIn") {
@@ -103,15 +110,18 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     } else {
                         console.log("Not local storage logged in status triggered.");
                         // request for refresh-token/access-token(requires idToken, userEmail)
-                        // will also return also paymentTire and paymentExp encoded in the jwt token and within response object.
-                        // after extracting the paymentTire and paymentExp update the local variables to set the information in the userInfo state.
+                        // will also return also paymentTire and paymentExp encoded in the jwt token and within response object verify and  replace the placeholder values underneath within the setUserInfo setter with the decoded paymentTier and paymentExp.
                         token = "";
                         tokenExpiration = Date.now() + ACCESS_TOKEN_TTL_MS;
                     }
 
                     // refresh token will be in browser http only cookie and the access token in the auth provider state(memory).
                     if (token) setAccessSecret(token);
-                    setUserInfo({...userInfo, paymentTire: 'Free', paymentExp: null});
+                    setUserInfo({
+                        ...userInfo,
+                        paymentTire: 'Free',
+                        paymentExp: null
+                    });
                     localStorage.setItem(loginStatusLsStr, "loggedIn");
                     localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: currentUser.email, expiresAt: tokenExpiration }));
                 }
