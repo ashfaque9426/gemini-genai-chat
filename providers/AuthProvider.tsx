@@ -91,7 +91,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     }
 
                     let token;
-                    let tokenExpiration: number | null = 0;
+                    let tokenExpiration;
                     const { creationTime, lastSignInTime } = currentUser.metadata;
 
                     const isFirstLogin = creationTime === lastSignInTime;
@@ -110,10 +110,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     let userPaymentExp = null;
 
                     if (logInStatus && logInStatus === "loggedIn") {
-                        await refreshAccessToken().then(({ token, expiresAt, paymentTire, paymentExp, message }) => {
+                        await refreshAccessToken().then(({ AccToken, expiresAt, paymentTire, paymentExp, message }) => {
                             if (message) throw new Error(message);
-                            if (token) {
-                                token = token;
+                            if (AccToken) {
+                                token = AccToken;
                                 tokenExpiration = expiresAt;
                                 userPaymentTire = paymentTire;
                                 userPaymentExp = paymentExp;
@@ -125,10 +125,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
                             console.error(message);
                         });
                     } else {
-                        await issueUserSecret(idToken, userInfo.userEmail).then(({ token, expiresAt, paymentTire, paymentExp, message }) => {
+                        await issueUserSecret(idToken, userInfo.userEmail).then(({ AccToken, expiresAt, paymentTire, paymentExp, message }) => {
                             if (message) throw new Error(message);
-                            if (token) {
-                                token = token;
+                            if (AccToken) {
+                                token = AccToken;
                                 tokenExpiration = expiresAt;
                                 userPaymentTire = paymentTire;
                                 userPaymentExp = paymentExp;

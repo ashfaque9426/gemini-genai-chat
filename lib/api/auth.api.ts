@@ -3,7 +3,7 @@ import { lsUserInfoStr } from "@/utils/constants/constants";
 import { clientErrMsg } from "@/utils/utilityFunc/utilityFunc";
 
 interface TokenType {
-    token: string | null;
+    AccToken: string | null;
     expiresAt: number | null;
     message: string | null;
     paymentTire: string | null;
@@ -14,7 +14,7 @@ interface StoredUserInfo { userEmail: string, expiresAt: number }
 
 export async function refreshAccessToken(): Promise<TokenType> {
     const dataObj: TokenType = {
-        token: null,
+        AccToken: null,
         expiresAt: null,
         message: null,
         paymentTire: null,
@@ -44,7 +44,7 @@ export async function refreshAccessToken(): Promise<TokenType> {
             throw new Error(result.message);
         }
 
-        dataObj["token"] = result.accessToken;
+        dataObj["AccToken"] = result.accessToken;
         dataObj["expiresAt"] = result.expiresAt;
         dataObj["paymentTire"] = result.paymentTire;
         dataObj["paymentExp"] = result.paymentExp;
@@ -58,7 +58,7 @@ export async function refreshAccessToken(): Promise<TokenType> {
 
 export async function issueUserSecret(idToken: string, userEmail: string | null): Promise<TokenType> {
     const dataObj: TokenType = {
-        token: null,
+        AccToken: null,
         expiresAt: null,
         message: null,
         paymentTire: null,
@@ -81,7 +81,7 @@ export async function issueUserSecret(idToken: string, userEmail: string | null)
         });
 
         const result = await response.json();
-        dataObj["token"] = result.accessToken;
+        dataObj["AccToken"] = result.accessToken;
         dataObj["expiresAt"] = result.expiresAt;
         dataObj["paymentTire"] = result.paymentTire;
         dataObj["paymentExp"] = result.paymentExp;
