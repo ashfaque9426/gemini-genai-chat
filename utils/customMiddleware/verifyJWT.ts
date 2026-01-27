@@ -53,7 +53,7 @@ export const verifyJWT = (req: NextRequest, tokenType: "Access" | "Refresh"): Ve
     console.error("JWT verification failed:", error);
 
     if (error instanceof TokenExpiredError) {
-      return { error: true, message: `Authorization error, expired ${tokenType} Token.`, status: 401 };
+      return { error: true, message: `Authorization error. ${tokenType} Token expired.`, status: 401 };
     } 
     else if (error instanceof JsonWebTokenError) {
       return { error: true, message: `Authorization error. Invalid ${tokenType} Token.`, status: 401 };

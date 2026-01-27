@@ -51,7 +51,7 @@ function useAxiosSecure() {
         const backendData = error.response?.data as BackendError;
         const backendMessage = backendData?.message;
 
-        if (error.response?.status === 401 && !originalRequest._retry && backendMessage === "Authorization error, expired Access Token.") {
+        if (error.response?.status === 401 && !originalRequest._retry && backendMessage === "Authorization error. Access Token expired.") {
           originalRequest._retry = true;
 
           if (isRefreshing.current) {
