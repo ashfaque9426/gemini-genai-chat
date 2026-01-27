@@ -65,15 +65,15 @@ function useAxiosSecure() {
           isRefreshing.current = true;
 
           try {
-            const { token, message } = await refreshAccessToken();
+            const { AccToken, message } = await refreshAccessToken();
 
-            if (!token) {
+            if (!AccToken) {
               throw new Error(message || "Refresh Token is not a verified refresh token or expired.");
             }
 
-            setAccessSecret(token);
+            setAccessSecret(AccToken);
 
-            originalRequest.headers!.Authorization = `Bearer ${token}`;
+            originalRequest.headers!.Authorization = `Bearer ${AccToken}`;
 
             pendingRequests.current.forEach(cb => cb());
             pendingRequests.current = [];
