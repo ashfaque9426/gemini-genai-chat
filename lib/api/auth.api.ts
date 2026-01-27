@@ -40,7 +40,7 @@ export async function refreshAccessToken(): Promise<TokenType> {
 
         const result = await response.json();
 
-        if (!response.ok && response.status === 401) {
+        if (!response.ok) {
             throw new Error(result.message);
         }
 
