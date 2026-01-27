@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
         const { decoded, error, message } = verifyJWT(req, "Refresh");
 
-        if (error) {
+        if (error && !message.includes('expired')) {
             throw new Error(message);
         }
 

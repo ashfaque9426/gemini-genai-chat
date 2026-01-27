@@ -1,4 +1,4 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload, TokenExpiredError, JsonWebTokenError  } from "jsonwebtoken";
 import { NextRequest } from "next/server";
 
 interface VerifyJWTResult {
@@ -51,6 +51,13 @@ export const verifyJWT = (req: NextRequest, tokenType: "Access" | "Refresh"): Ve
     return { decoded, error: false, message: "", status: 200 };
   } catch (error) {
     console.error("JWT verification failed:", error);
+
+    if (error instanceof TokenExpiredError) {
+      return { error: true, message: `Authorization error, expired ${tokenType} Token.`, status: 401 };
+    } 
+    else if (error instanceof JsonWebTokenError) {
+      return { error: true, message: `Authorization error. Invalid ${tokenType} Token.`, status: 401 };
+    }
 
     return { error: true, message: `Authorization error. Invalid or expired ${tokenType} Token.`, status: 401 };
   }

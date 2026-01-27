@@ -10,6 +10,8 @@ interface TokenType {
     paymentExp: number | null;
 }
 
+interface StoredUserInfo { userEmail: string, expiresAt: number }
+
 export async function refreshAccessToken(): Promise<TokenType> {
     const dataObj: TokenType = {
         token: null,
@@ -26,7 +28,7 @@ export async function refreshAccessToken(): Promise<TokenType> {
             throw new Error("User info not found in the local stroage.");
         }
 
-        const parsedUserInfo: UserInfoData = JSON.parse(userInfo);
+        const parsedUserInfo: StoredUserInfo = JSON.parse(userInfo);
         const response = await fetch('/api/refresh', {
             method: "POST",
             headers: {
