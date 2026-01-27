@@ -3,20 +3,22 @@ import { ACCESS_EXPIRES } from "@/utils/constants/constants";
 import jwt from "jsonwebtoken";
 
 interface ReturnType {
-    refreshToken: string | null,
-    accessToken: string | null,
+    refreshToken: string | null;
+    accessToken: string | null;
+    paymentTire: string | null;
+    paymentExp: number | null;
     errMsg: string | null
 }
 
 export async function signJWTToken(uid: string, userEmail: string, tokenType: 'Access' | 'Refresh' | 'RefreshAccess'): Promise<ReturnType> {
-    if (!uid || !userEmail || !tokenType) return { refreshToken: null, accessToken: null, errMsg: `${(!uid && 'uid parameter value') || (!userEmail && 'userEmail parameter value') || (!tokenType && 'tokenType parameter value')} is required.` }
+    if (!uid || !userEmail || !tokenType) return { refreshToken: null, accessToken: null, errMsg: `${(!uid && 'uid parameter value') || (!userEmail && 'userEmail parameter value') || (!tokenType && 'tokenType parameter value')} is required.`, paymentTire: null, paymentExp: null }
     try {
         const result = await User.findOne({ uid: uid, userEmail: userEmail }).lean();
         if (!result) {
             throw new Error('User not found in Mongodb. User query made to sign JWT Token.');
         }
-        const payload = { uid: result.uid, userEmail: result.userEmail };
-        const tokenObj: ReturnType = { refreshToken: null, accessToken: null, errMsg: null };
+        const payload = { uid: result.uid, userEmail: result.userEmail, sessionType: result.sessionType, paymentTire: result.paymentTire, paymentExp: result.paymentExp };
+        const tokenObj: ReturnType = { refreshToken: null, accessToken: null, paymentTire: null, paymentExp: null, errMsg: null };
         const refreshExpire = '7d';
         const accessExpire = ACCESS_EXPIRES;
 
@@ -27,6 +29,9 @@ export async function signJWTToken(uid: string, userEmail: string, tokenType: 'A
         if (!process.env.ACCESS_SECRET) {
             throw new Error('ACCESS_SECRET environment variable is not defined.');
         }
+
+        tokenObj['paymentTire'] = result.paymentTire;
+        tokenObj['paymentExp'] = result.paymentExp;
 
         if (tokenType === "Refresh") {
             const token = jwt.sign(payload, process.env.REFRESH_SECRET as string, { expiresIn: refreshExpire });
@@ -51,6 +56,6 @@ export async function signJWTToken(uid: string, userEmail: string, tokenType: 'A
         if (err instanceof Error) {
             errMsg += err.message;
         }
-        return { refreshToken: null, accessToken: null, errMsg };
+        return { refreshToken: null, accessToken: null, paymentTire: null, paymentExp: null, errMsg };
     }
 }

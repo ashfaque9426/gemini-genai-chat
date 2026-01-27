@@ -1,10 +1,11 @@
 
 "use client"
+import { clearRFSHToken, issueUserSecret, refreshAccessToken } from '@/lib/api/auth.api';
 import { saveUser } from '@/lib/api/user.api';
 import auth from '@/lib/firebase';
 import { GoogleImageUrl } from '@/models/User';
-import { ACCESS_TOKEN_TTL_MS, loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
-import { isAccessTokenValid, showToastMsg } from '@/utils/utilityFunc/utilityFunc';
+import { loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
+import { showToastMsg } from '@/utils/utilityFunc/utilityFunc';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
 import { createContext, ReactNode, useEffect, useState } from 'react';
 import { ToastContainer, Bounce } from 'react-toastify';
@@ -27,7 +28,7 @@ export interface UserInfoData {
     userEmail: string | null;
     photoURL: GoogleImageUrl;
     sessionType: string;
-    paymentTire: string;
+    paymentTire: string | null;
     paymentExp: number | null;
 }
 
@@ -52,6 +53,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
         try {
             await signOut(auth);
             setAccessSecret(null);
+            await clearRFSHToken(userInfo);
             setUserInfo(null);
             localStorage.setItem(loginStatusLsStr, "loggedOut");
             localStorage.removeItem(lsUserInfoStr);
@@ -68,7 +70,6 @@ function AuthProvider({ children }: { children: ReactNode }) {
             try {
                 if (currentUser?.uid) {
                     const idToken = await currentUser.getIdToken(true);
-                    console.log(idToken);
                     const userInfo = {
                         uid: currentUser.uid,
                         userName: currentUser.displayName || "Anonymous",
@@ -78,15 +79,12 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     }
 
                     let token;
-                    let tokenExpiration = 0;
+                    let tokenExpiration: number | null = 0;
                     const { creationTime, lastSignInTime } = currentUser.metadata;
 
                     const isFirstLogin = creationTime === lastSignInTime;
 
                     if (isFirstLogin && !storedUserInfo) {
-                        console.log("first time logged in triggered.");
-                        // idToken required here
-                        // save the user if only it's user's first time login(requires userInfo object)
                         showToastMsg('info', "Please wait until user profile creation process in done in DB");
                         const message = await saveUser(idToken, userInfo);
                         if (message.includes("successfully")) {
@@ -94,33 +92,38 @@ function AuthProvider({ children }: { children: ReactNode }) {
                         } else {
                             console.error(message);
                         }
-                        
                     }
+
+                    let userPaymentTire = null;
+                    let userPaymentExp = null;
 
                     if (logInStatus && logInStatus === "loggedIn") {
-                        const hasValidAccessToken = isAccessTokenValid();
-                        if (!hasValidAccessToken) {
-                            // refresh access token(requires userEmail)
-                            // will also retur  paymentTire and paymentExp encoded in the jwt token and within response object.
-                            // after extracting the paymentTire and paymentExp update the local variables to set the information in the userInfo state.
-                            console.log("local storage logged in status triggered.");
-                            token = "";
-                            tokenExpiration = Date.now() + ACCESS_TOKEN_TTL_MS;
-                        }
+                        await refreshAccessToken().then(({ token, expiresAt, paymentTire, paymentExp, message }) => {
+                            if (message) throw new Error(message);
+                            if (token) {
+                                token = token;
+                                tokenExpiration = expiresAt;
+                                userPaymentTire = paymentTire;
+                                userPaymentExp = paymentExp;
+                            }
+                        }).catch((message) => console.error(message));
                     } else {
-                        console.log("Not local storage logged in status triggered.");
-                        // request for refresh-token/access-token(requires idToken, userEmail)
-                        // will also return also paymentTire and paymentExp encoded in the jwt token and within response object verify and  replace the placeholder values underneath within the setUserInfo setter with the decoded paymentTier and paymentExp.
-                        token = "";
-                        tokenExpiration = Date.now() + ACCESS_TOKEN_TTL_MS;
+                        await issueUserSecret(idToken, userInfo.userEmail).then(({ token, expiresAt, paymentTire, paymentExp, message }) => {
+                            if (message) throw new Error(message);
+                            if (token) {
+                                token = token;
+                                tokenExpiration = expiresAt;
+                                userPaymentTire = paymentTire;
+                                userPaymentExp = paymentExp;
+                            }
+                        }).catch((message) => console.error(message));
                     }
 
-                    // refresh token will be in browser http only cookie and the access token in the auth provider state(memory).
                     if (token) setAccessSecret(token);
                     setUserInfo({
                         ...userInfo,
-                        paymentTire: 'Free',
-                        paymentExp: null
+                        paymentTire: userPaymentTire,
+                        paymentExp: userPaymentExp
                     });
                     localStorage.setItem(loginStatusLsStr, "loggedIn");
                     localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: currentUser.email, expiresAt: tokenExpiration }));

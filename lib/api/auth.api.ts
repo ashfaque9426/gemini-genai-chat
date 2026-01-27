@@ -3,14 +3,20 @@ import { lsUserInfoStr } from "@/utils/constants/constants";
 import { clientErrMsg } from "@/utils/utilityFunc/utilityFunc";
 
 interface TokenType {
-    token: string | null,
-    message: string | null
+    token: string | null;
+    expiresAt: number | null;
+    message: string | null;
+    paymentTire: string | null;
+    paymentExp: number | null;
 }
 
 export async function refreshAccessToken(): Promise<TokenType> {
     const dataObj: TokenType = {
         token: null,
-        message: null
+        expiresAt: null,
+        message: null,
+        paymentTire: null,
+        paymentExp: null
     };
 
     try {
@@ -30,8 +36,13 @@ export async function refreshAccessToken(): Promise<TokenType> {
             body: JSON.stringify(parsedUserInfo)
         });
 
+
+
         const result = await response.json();
         dataObj["token"] = result.accessToken;
+        dataObj["expiresAt"] = result.expiresAt;
+        dataObj["paymentTire"] = result.paymentTire;
+        dataObj["paymentExp"] = result.paymentExp;
     } catch (err) {
         const message = clientErrMsg(err, "Failed to refresh the access token. Err:");
         dataObj["message"] = message;
@@ -40,10 +51,13 @@ export async function refreshAccessToken(): Promise<TokenType> {
     return dataObj;
 }
 
-export async function issueUserSecret(idToken: string, userEmail: string): Promise<TokenType> {
+export async function issueUserSecret(idToken: string, userEmail: string | null): Promise<TokenType> {
     const dataObj: TokenType = {
         token: null,
-        message: null
+        expiresAt: null,
+        message: null,
+        paymentTire: null,
+        paymentExp: null
     };
 
     if (!idToken || !userEmail) {
@@ -63,6 +77,9 @@ export async function issueUserSecret(idToken: string, userEmail: string): Promi
 
         const result = await response.json();
         dataObj["token"] = result.accessToken;
+        dataObj["expiresAt"] = result.expiresAt;
+        dataObj["paymentTire"] = result.paymentTire;
+        dataObj["paymentExp"] = result.paymentExp;
     } catch (err) {
         const message = clientErrMsg(err, "Failed to refresh the access token. Err:");
         dataObj["message"] = message;
@@ -70,3 +87,28 @@ export async function issueUserSecret(idToken: string, userEmail: string): Promi
 
     return dataObj;
 }
+
+export async function clearRFSHToken(userInfo: UserInfoData | null) {
+    try {
+      if (!userInfo) {
+        throw new Error("User must be logged in to perform this operation.");
+      }
+
+      const response = await fetch('/api/clear-rfs-token', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ uid: userInfo?.uid, userEmail: userInfo?.userEmail })
+      });
+
+      if (!response.ok) {
+        const { message } = await response.json();
+        throw new Error(message);
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+  }

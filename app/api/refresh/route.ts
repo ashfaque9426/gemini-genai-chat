@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
             throw new Error("User Email doesn't match with decoded User Email. Unauthorized Access.");
         }
 
-        const { accessToken, errMsg } = await signJWTToken(decoded.uid, decoded.userEmail, "Access");
+        const { accessToken, paymentTire, paymentExp, errMsg } = await signJWTToken(decoded.uid, decoded.userEmail, "Access");
 
         if (errMsg) throw new Error(errMsg);
 
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
 
         const expirationTime = Date.now() + ACCESS_TOKEN_TTL_MS;
 
-        return NextResponse.json({ accessToken, expiresAt: expirationTime }, { status: 200 });
+        return NextResponse.json({ accessToken, expiresAt: expirationTime, paymentTire, paymentExp }, { status: 200 });
     }
     catch (err) {
         const { message, statusCode } = serverError('Server error occurred from /api/refresh.', 'required', 'Unauthorized Access', 'Authorization error', 'User not found', err, 400, 401, 401, 404);

@@ -28,7 +28,7 @@ export async function POST(req: Request) {
             throw new Error("Authorization error, User email doesn't match with the decoded email from Firebase Token.");
         }
 
-        const { refreshToken, accessToken, errMsg } = await signJWTToken(uid, userEmail, "RefreshAccess");
+        const { refreshToken, accessToken, paymentTire, paymentExp, errMsg } = await signJWTToken(uid, userEmail, "RefreshAccess");
         if (!refreshToken) {
             throw new Error("Refresh token generation failed");
         } else if (!accessToken) {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
         if (errMsg) throw new Error(errMsg);
         const expirationTime = Date.now() + ACCESS_TOKEN_TTL_MS;
 
-        const response = NextResponse.json({ accessToken, expiresAt: expirationTime }, { status: 200 });
+        const response = NextResponse.json({ accessToken, expiresAt: expirationTime, paymentTire, paymentExp }, { status: 200 });
 
         response.cookies.set({
             name: "refreshToken",
