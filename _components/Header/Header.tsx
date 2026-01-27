@@ -5,7 +5,7 @@ import Link from "next/link";
 import Loading from "../Loading/Loading";
 
 function Header() {
-  const { contextLoading, userInfo, googlePopup, setContextLoading, logOut } = useAuth();
+  const { contextLoading, userInfo, googlePopup, setContextLoading, setPerfLogOut } = useAuth();
 
   const photoURL = userInfo?.photoURL ?? '/assets/images/no_user.webp';
   const userName = userInfo?.userName && userInfo.userName.length > 16 ? userInfo.userName.slice(0, 15) + "..." : userInfo?.userName;
@@ -31,7 +31,7 @@ function Header() {
               <figcaption className="text-lg font-semibold" >{userName}</figcaption>
               <Image className="object-cover rounded-full" src={photoURL} alt="User image" width={40} height={40} />
             </figure>
-            <button onClick={logOut} className='badge-dark'>Signout</button>
+            <button onClick={() => setPerfLogOut(true)} className='badge-dark'>Signout</button>
           </>}
         </section>
       </div>

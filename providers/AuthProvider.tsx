@@ -7,7 +7,7 @@ import { GoogleImageUrl } from '@/models/User';
 import { loginStatusLsStr, lsUserInfoStr } from '@/utils/constants/constants';
 import { showToastMsg } from '@/utils/utilityFunc/utilityFunc';
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut, UserCredential } from 'firebase/auth';
-import { createContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useEffect, useState } from 'react';
 import { ToastContainer, Bounce } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 
@@ -18,7 +18,7 @@ interface AuthContextValues {
     setUserInfo: (info: UserInfoData) => void,
     accessSecret: string | null,
     googlePopup: () => Promise<UserCredential>,
-    logOut: () => Promise<void>,
+    setPerfLogOut: (value: boolean) => void,
     setAccessSecret: (value: string) => void
 }
 
@@ -43,13 +43,14 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
     const [accessSecret, setAccessSecret] = useState<string | null>(null);
+    const [perfLogOut, setPerfLogOut] = useState(false);
 
     const googlePopup = () => {
         setContextLoading(true);
         return signInWithPopup(auth, googleAuthProvider);
     }
 
-    const logOut = async () => {
+    const logOut = useCallback(async () => {
         try {
             await signOut(auth);
             setAccessSecret(null);
@@ -61,7 +62,18 @@ function AuthProvider({ children }: { children: ReactNode }) {
             const errMsg = err instanceof Error ? err.message : "error occurred during user logout";
             console.log(errMsg);
         }
-    }
+    }, [userInfo]);
+
+    useEffect(()=> {
+        const performLogOut = async () => {
+            await logOut();
+            setPerfLogOut(false);
+        }
+        
+        if (perfLogOut) {
+            performLogOut();
+        }
+    }, [perfLogOut, logOut]);
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -106,7 +118,12 @@ function AuthProvider({ children }: { children: ReactNode }) {
                                 userPaymentTire = paymentTire;
                                 userPaymentExp = paymentExp;
                             }
-                        }).catch((message) => console.error(message));
+                        }).catch((message) => {
+                            if (message.includes('No') || message.includes('Invalid') || message.includes('Refresh Token expired')) {
+                                setPerfLogOut(true);
+                            }
+                            console.error(message);
+                        });
                     } else {
                         await issueUserSecret(idToken, userInfo.userEmail).then(({ token, expiresAt, paymentTire, paymentExp, message }) => {
                             if (message) throw new Error(message);
@@ -141,7 +158,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, logOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"

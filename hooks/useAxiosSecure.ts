@@ -19,7 +19,7 @@ const axiosSecure = axios.create({
 });
 
 function useAxiosSecure() {
-  const { accessSecret, logOut, setAccessSecret } = useAuth();
+  const { accessSecret, setPerfLogOut, setAccessSecret } = useAuth();
 
   const isRefreshing = useRef(false);
   const pendingRequests = useRef<(() => void)[]>([]);
@@ -86,7 +86,7 @@ function useAxiosSecure() {
             } else {
               console.error(`${errStr} Err: `, err);
             }
-            await logOut();
+            setPerfLogOut(true);
             return Promise.reject(err);
           } finally {
             isRefreshing.current = false;
@@ -101,7 +101,7 @@ function useAxiosSecure() {
       axiosSecure.interceptors.request.eject(requestInterceptor);
       axiosSecure.interceptors.response.eject(responseInterceptor);
     };
-  }, [accessSecret, logOut, setAccessSecret]);
+  }, [accessSecret, setAccessSecret, setPerfLogOut]);
 
   return axiosSecure;
 }

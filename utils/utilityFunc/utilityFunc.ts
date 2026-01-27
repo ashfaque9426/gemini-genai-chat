@@ -19,7 +19,7 @@ export function clientErrMsg(err: ErrorInput, errStr: string): string {
     console.error(errStr, err);
     let message = errStr;
     if (err instanceof Error) {
-        message += err.message;
+        message += ' Err: ' + err.message;
     }
 
     return message;

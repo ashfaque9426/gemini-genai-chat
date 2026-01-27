@@ -38,15 +38,18 @@ export async function refreshAccessToken(): Promise<TokenType> {
             body: JSON.stringify(parsedUserInfo)
         });
 
-
-
         const result = await response.json();
+
+        if (!response.ok && response.status === 401) {
+            throw new Error(result.message);
+        }
+
         dataObj["token"] = result.accessToken;
         dataObj["expiresAt"] = result.expiresAt;
         dataObj["paymentTire"] = result.paymentTire;
         dataObj["paymentExp"] = result.paymentExp;
     } catch (err) {
-        const message = clientErrMsg(err, "Failed to refresh the access token. Err:");
+        const message = clientErrMsg(err, "Failed to refresh the access token.");
         dataObj["message"] = message;
     }
 
@@ -83,7 +86,7 @@ export async function issueUserSecret(idToken: string, userEmail: string | null)
         dataObj["paymentTire"] = result.paymentTire;
         dataObj["paymentExp"] = result.paymentExp;
     } catch (err) {
-        const message = clientErrMsg(err, "Failed to refresh the access token. Err:");
+        const message = clientErrMsg(err, "Failed to refresh the access token.");
         dataObj["message"] = message;
     }
 
