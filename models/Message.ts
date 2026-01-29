@@ -41,7 +41,7 @@ const MessageSchema = new Schema<MessageDoc>(
   }
 );
 
-MessageSchema.index({ conversationId: 1, createdAt: 1 });
+MessageSchema.index({ createdAt: 1 });
 
 const Message: Model<MessageDoc> =
   mongoose.models.Message ||

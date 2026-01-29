@@ -18,6 +18,7 @@ const ConversationSchema = new Schema<ConversationDoc>(
       type: String,
       trim: true,
       maxlength: 120,
+      set: (v: string) => v?.slice(0, 120)
     },
   },
   {
@@ -25,10 +26,6 @@ const ConversationSchema = new Schema<ConversationDoc>(
   }
 );
 
-ConversationSchema.index({ uid: 1 });
-
-const Conversation: Model<ConversationDoc> =
-  mongoose.models.Conversation ||
-  mongoose.model<ConversationDoc>("Conversation", ConversationSchema);
+const Conversation: Model<ConversationDoc> = mongoose.models.Conversation || mongoose.model<ConversationDoc>("Conversation", ConversationSchema);
 
 export default Conversation;
