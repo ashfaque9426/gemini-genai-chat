@@ -32,6 +32,14 @@ export async function POST(req: NextRequest): Promise<Response> {
   }
 
   const { messages }: ChatRequestBody = await req.json();
+
+  if (!messages || messages.length === 0) {
+    return new Response(JSON.stringify({ message: "Invalid Request. Invalid value or an empty messages array." }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+    });
+  }
+
   const sysPrompt = {
     role: "system",
     content: "You are a helpful assistant."
@@ -98,6 +106,6 @@ export async function POST(req: NextRequest): Promise<Response> {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: `Internal server error. Failed to generate content. Err: ${error}` }), { status: 500 });
+    return new Response(JSON.stringify({ error: `Internal server error from /api/chat. Failed to generate content. Err: ${error}` }), { status: 500 });
   }
 }

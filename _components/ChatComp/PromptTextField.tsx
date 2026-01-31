@@ -1,6 +1,7 @@
 "use client"
 import React from 'react';
 import cn from '@/utils/clsx';
+import { useDeviceDetection } from '@/hooks/useDeviceDetection';
 
 interface FieldInputProps {
     name: string;
@@ -21,6 +22,7 @@ export default function PromptTextField({
     onEventChange,
     sendPrompt
 }: FieldInputProps) {
+    const deviceType = useDeviceDetection();
     const ref = React.useRef<HTMLTextAreaElement>(null);
 
     const resize = () => {
@@ -54,14 +56,14 @@ export default function PromptTextField({
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === "Enter" && !e.shiftKey) {
+        if (deviceType === "desktop" && e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             if (value !== "" && value.trim().length > 0) sendPrompt?.();
             resetHeight();
             return;
         }
 
-        if (e.key === "Enter" && e.shiftKey) {
+        if ((deviceType === "desktop" && e.key === "Enter" && e.shiftKey) || (deviceType !== "desktop" && e.key === "Enter")) {
             requestAnimationFrame(resize);
         }
     };

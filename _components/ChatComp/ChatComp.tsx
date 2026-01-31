@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import PromptTextField from "./PromptTextField";
 import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
+import { LuSendHorizontal } from "react-icons/lu";
 import MarkdownRenderer from "./MarkDownRenderer";
 import cn from "@/utils/clsx";
 import useAuth from "@/hooks/useAuth";
@@ -31,7 +32,7 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
   }
 
   async function sendUserPrompt() {
-    if (!dBtnDisabled) return;
+    if (!dBtnDisabled || userPrompt === "" || (userPrompt !== "" && userPrompt.trim().length === 0)) return;
     abortControllerRef.current?.abort();
 
     const controller = new AbortController();
@@ -145,10 +146,14 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
           </div>
 
           <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
-          <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+          {
+            dBtnDisabled ?
+            <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={userPrompt.length === 0} onClick={sendUserPrompt}><LuSendHorizontal /></button>
+            :
+            <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+          }
         </> : <Loading defaultIcon={true} loadingIconStyles="text-5xl" />
       }
-
     </div>
   );
 }
