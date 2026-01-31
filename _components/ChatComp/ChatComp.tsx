@@ -7,6 +7,10 @@ import MarkdownRenderer from "./MarkDownRenderer";
 import cn from "@/utils/clsx";
 import useAuth from "@/hooks/useAuth";
 import Loading from "../Loading/Loading";
+import { refreshAccessToken } from "@/lib/api/auth.api";
+import { showToastMsg } from "@/utils/utilityFunc/utilityFunc";
+import { lsUserInfoStr } from "@/utils/constants/constants";
+import useAxiosSecure from "@/hooks/useAxiosSecure";
 interface chatCompTypes {
   chatCompStyles?: string;
 }
@@ -16,7 +20,8 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
 
-  const { contextLoading, userInfo } = useAuth();
+  const { contextLoading, userInfo, convId, setConvId, setAccessSecret, setPerfLogOut } = useAuth();
+  const axiosSecure = useAxiosSecure();
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -51,20 +56,29 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
       signal: controller.signal
     }
 
+    let resStr = "";
+
     try {
       const res = await fetch("/api/chat", methodObj);
 
       if (!res.ok) {
         const data = await res.json();
         if (userInfo && res.status === 401) {
-          console.log("Access token expired or invalid", data.message);
-          // if user logged in then,
-          // call the refreshAccessToken() here since axios does not support data streaming the way of incremental chunks, if the token is being returned update the auth token state.
-          // if something is wrong and message being returned, update the outter scopped message variable.
-          // if the data.message contains includes that string indicating refresh token is expired call user logOut method here.
+          await refreshAccessToken().then(({ AccToken, message, expiresAt }) => {
+            if (AccToken) {
+              setAccessSecret(AccToken);
+              localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: userInfo.userEmail, expiresAt: expiresAt }));
+            }
+            else if (message) throw new Error(message);
+          }).catch(err => {
+            if (err.message.includes("Refresh Token expired") || err.messae.includes("Invalid")) {
+              setPerfLogOut(true);
+            }
+            throw new Error(err.message);
+          });
+        } else {
+          throw new Error(data.message || "Request failed.");
         }
-        // then wrong throw new Error here with the updated message variable.
-        throw new Error(data.message || "Request failed");
       }
 
       if (!res.body) {
@@ -73,7 +87,6 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
 
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
-      let resStr = "";
 
       while (true) {
         const { value, done } = await reader.read();
@@ -96,14 +109,22 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
       if (isAbort) {
         setConversations(prev => prev.slice(0, -2));
         abortControllerRef.current = null;
-        console.log("Generation aborted by user");
+        console.error("Generation aborted by user");
       } else {
-        console.error("Generate Error Response:", err);
+        console.error("Generate Response Error. Err: ", err);
       }
     } finally {
-      // if the user is logged in then, make post request to the api route to save the userPrompt and resStr to mongodb collection(because response streming chunks begins with the returned response with headers from ther server, so cant return the error message from the server endpoint if failed to update the user prompt and LLM response message in mongodb collection).
+      if (!controller.signal.aborted && userInfo) {
+        const { conversationId, error, message } = (await axiosSecure.post('/save-conversation', { conversationId: convId, userPrompt, responseText: resStr })).data;
 
-      // then
+        if (error) {
+          showToastMsg("error", "Failed to save the latest conversation in the database.");
+          console.error(message);
+        } else {
+          setConvId(conversationId);
+        }
+      }
+
       abortControllerRef.current = null;
       setdBtnDisabled(true);
     }

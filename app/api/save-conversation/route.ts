@@ -78,10 +78,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             content: responseText,
         });
 
-        return NextResponse.json({ message: "Conversation saved successfully." }, { status: 201 });
+        return NextResponse.json({ conversationId: connId, error: false, message: "Conversation saved successfully." }, { status: 201 });
     }
     catch (err) {
         const { message, statusCode } = serverError('Server error occurred from /api/save-conversation.', 'No ', 'Invalid', 'expired', 'required', err, 401, 401, 401, 400);
-        return NextResponse.json({ message }, { status: statusCode });
+        return NextResponse.json({ conversationId: null, error: true, message }, { status: statusCode });
     }
 }

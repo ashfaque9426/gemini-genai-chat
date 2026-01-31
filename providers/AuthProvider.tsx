@@ -13,12 +13,14 @@ import "react-toastify/dist/ReactToastify.css";
 
 interface AuthContextValues {
     contextLoading: boolean,
-    setContextLoading: (value: boolean) => void,
-    userInfo: UserInfoData | null,
-    setUserInfo: (info: UserInfoData) => void,
-    accessSecret: string | null,
-    googlePopup: () => Promise<UserCredential>,
-    setPerfLogOut: (value: boolean) => void,
+    setContextLoading: (value: boolean) => void;
+    userInfo: UserInfoData | null;
+    setUserInfo: (info: UserInfoData) => void;
+    accessSecret: string | null;
+    convId: string | null;
+    setConvId: (value: string) => void;
+    googlePopup: () => Promise<UserCredential>;
+    setPerfLogOut: (value: boolean) => void;
     setAccessSecret: (value: string) => void
 }
 
@@ -42,6 +44,7 @@ googleAuthProvider.setCustomParameters({
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
+    const [convId, setConvId] = useState<string | null>(null);
     const [accessSecret, setAccessSecret] = useState<string | null>(null);
     const [perfLogOut, setPerfLogOut] = useState(false);
 
@@ -158,7 +161,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"
