@@ -31,7 +31,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         await connectToDB();
 
-        let connId: Types.ObjectId;
+        let convId: Types.ObjectId;
         if (conversationId) {
             if (!Types.ObjectId.isValid(conversationId)) {
                 throw new Error("Invalid conversationId");
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 throw new Error("Conversation not found or not owned by user.");
             }
 
-            connId = tempConvId;
+            convId = tempConvId;
         }
         else {
             const model = genAI.getGenerativeModel({
@@ -60,25 +60,25 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             const title = resObj.response.text();
 
             const conversation = await Conversation.create({ uid: userId, title });
-            connId = conversation._id;
+            convId = conversation._id;
         }
 
 
         await Message.create({
-            conversationId: connId,
+            conversationId: convId,
             uid: userId,
             role: 'user',
             content: userPrompt,
         });
 
         await Message.create({
-            conversationId: connId,
+            conversationId: convId,
             uid: userId,
             role: 'assistant',
             content: responseText,
         });
 
-        return NextResponse.json({ conversationId: connId, error: false, message: "Conversation saved successfully." }, { status: 201 });
+        return NextResponse.json({ conversationId: convId, error: false, message: "Conversation saved successfully." }, { status: 201 });
     }
     catch (err) {
         const { message, statusCode } = serverError('Server error occurred from /api/save-conversation.', 'No ', 'Invalid', 'expired', 'required', err, 401, 401, 401, 400);

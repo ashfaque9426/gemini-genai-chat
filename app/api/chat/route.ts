@@ -2,6 +2,7 @@
 import { NextRequest } from "next/server";
 import { verifyJWT } from "@/utils/customMiddleware/verifyJWT";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { serverError } from "@/utils/utilityFunc/serverError";
 
 interface ChatMessage {
   role: string;
@@ -31,30 +32,27 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
-  const { messages }: ChatRequestBody = await req.json();
-
-  if (!messages || messages.length === 0) {
-    return new Response(JSON.stringify({ message: "Invalid Request. Invalid value or an empty messages array." }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-    });
-  }
-
   const sysPrompt = {
     role: "system",
     content: "You are a helpful assistant."
   }
-
-  const messageArr = [sysPrompt, ...messages];
-
-  const last = messages.at(-1);
-  if (!last || last.role !== "user") throw new Error("Invalid state");
 
   const model = genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
   });
 
   try {
+    const { messages }: ChatRequestBody = await req.json();
+
+    if (!messages || messages.length === 0) {
+      throw new Error("Invalid Request. Invalid value or an empty messages array.");
+    }
+
+    const last = messages.at(-1);
+    if (!last || last.role !== "user") throw new Error("Invalid state");
+
+    const messageArr = [sysPrompt, ...messages];
+
     const result = await model.generateContentStream({
       contents: messageArr.map((m: ChatMessage) => ({
         role: m.role,
@@ -106,6 +104,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: `Internal server error from /api/chat. Failed to generate content. Err: ${error}` }), { status: 500 });
+    const { message, statusCode } = serverError("Error from /api/chat", "Invalid Request", "Invalid state", "aborted", "", error, 400, 400, 499, 0);
+    return new Response(JSON.stringify({ error: message }), { status: statusCode, headers: { "Content-Type": "application/json" } });
   }
 }
