@@ -37,7 +37,7 @@ const MessageSchema = new Schema<MessageDoc>(
     },
   },
   {
-    timestamps: { createdAt: true, updatedAt: false },
+    timestamps: true,
   }
 );
 
