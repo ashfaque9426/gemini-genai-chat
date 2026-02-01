@@ -41,10 +41,6 @@ const MessageSchema = new Schema<MessageDoc>(
   }
 );
 
-MessageSchema.index({ createdAt: 1 });
-
-const Message: Model<MessageDoc> =
-  mongoose.models.Message ||
-  mongoose.model<MessageDoc>("Message", MessageSchema);
+const Message: Model<MessageDoc> = mongoose.models.Message || mongoose.model<MessageDoc>("Message", MessageSchema);
 
 export default Message;
