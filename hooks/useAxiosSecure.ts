@@ -4,6 +4,7 @@ import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import { useEffect, useRef } from "react";
 import useAuth from "./useAuth";
 import { refreshAccessToken } from "@/lib/api/auth.api";
+import { lsUserInfoStr } from "@/utils/constants/constants";
 
 interface AxiosRequestConfigWithRetry extends AxiosRequestConfig {
   _retry?: boolean;
@@ -65,13 +66,18 @@ function useAxiosSecure() {
           isRefreshing.current = true;
 
           try {
-            const { AccToken, message } = await refreshAccessToken();
+            const { AccToken, expiresAt, message } = await refreshAccessToken();
 
             if (!AccToken) {
               throw new Error(message || "Refresh Token is not a verified refresh token or expired.");
             }
 
             setAccessSecret(AccToken);
+            const savedUserInfo = localStorage.getItem(lsUserInfoStr);
+            if (savedUserInfo) {
+              const parsedUserInfo = JSON.parse(savedUserInfo);
+              localStorage.setItem(lsUserInfoStr, JSON.stringify({...parsedUserInfo, expiresAt: expiresAt}))
+            }
 
             originalRequest.headers!.Authorization = `Bearer ${AccToken}`;
 

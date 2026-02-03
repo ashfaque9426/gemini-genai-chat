@@ -48,6 +48,10 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
                 throw new Error("Conversation not found or not owned by user.");
             }
 
+            await Conversation.findByIdAndUpdate(tempConvId, {
+                $set: { updatedAt: new Date() },
+            });
+
             convId = tempConvId;
         }
         else {

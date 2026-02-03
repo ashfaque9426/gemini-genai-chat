@@ -115,14 +115,14 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
         console.error("Generate Response Error. Err: ", err);
       }
     } finally {
-      if (!controller.signal.aborted && userInfo) {
-        const { conversationId, error, message } = (await axiosSecure.post('/save-conversation', { conversationId: convId, userPrompt, responseText: resStr })).data;
+      if (!controller.signal.aborted && userInfo && convId.conversationId) {
+        const { conversationId, error, message } = (await axiosSecure.post('/save-conversation', { conversationId: convId.conversationId, userPrompt, responseText: resStr })).data;
 
         if (error) {
           showToastMsg("error", "Failed to save the latest conversation in the database.");
           console.error(message);
-        } else {
-          setConvId(conversationId);
+        } else if (conversationId) {
+          setConvId(conversationId, true);
         }
       }
 

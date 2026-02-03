@@ -17,8 +17,8 @@ interface AuthContextValues {
     userInfo: UserInfoData | null;
     setUserInfo: (info: UserInfoData) => void;
     accessSecret: string | null;
-    convId: string | null;
-    setConvId: (value: string) => void;
+    convId: convIdObj;
+    setConvId: (conValue: string, rsValue?: boolean) => void;
     googlePopup: () => Promise<UserCredential>;
     setPerfLogOut: (value: boolean) => void;
     setAccessSecret: (value: string) => void
@@ -34,6 +34,11 @@ export interface UserInfoData {
     paymentExp: number | null;
 }
 
+interface convIdObj {
+    conversationId: string | null;
+    reloadSession: boolean;
+}
+
 const AuthContext = createContext<AuthContextValues | null>(null);
 const googleAuthProvider = new GoogleAuthProvider();
 
@@ -44,7 +49,12 @@ googleAuthProvider.setCustomParameters({
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
-    const [convId, setConvId] = useState<string | null>(null);
+    const [convId, _setConvId] = useState<convIdObj>({ conversationId: null, reloadSession: false });;
+
+    const setConvId = (conValue: string, rsValue: boolean = false) => {
+        _setConvId({ conversationId: conValue, reloadSession: rsValue });
+    };
+    
     const [accessSecret, setAccessSecret] = useState<string | null>(null);
     const [perfLogOut, setPerfLogOut] = useState(false);
 
