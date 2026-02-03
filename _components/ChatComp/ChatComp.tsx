@@ -9,7 +9,7 @@ import cn from "@/utils/clsx";
 import useAuth from "@/hooks/useAuth";
 import Loading from "../Loading/Loading";
 import { refreshAccessToken } from "@/lib/api/auth.api";
-import { showToastMsg } from "@/utils/utilityFunc/utilityFunc";
+import { isAccessTokenValid, showToastMsg } from "@/utils/utilityFunc/utilityFunc";
 import { lsUserInfoStr } from "@/utils/constants/constants";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
 interface chatCompTypes {
@@ -60,26 +60,26 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
     let resStr = "";
 
     try {
+      if (userInfo && !isAccessTokenValid()) {
+        await refreshAccessToken().then(({ AccToken, message, expiresAt }) => {
+          if (AccToken) {
+            setAccessSecret(AccToken);
+            localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: userInfo.userEmail, expiresAt: expiresAt }));
+          }
+          else if (message) throw new Error(message);
+        }).catch(err => {
+          if (err.message.includes("Refresh Token expired") || err.messae.includes("Invalid")) {
+            setPerfLogOut(true);
+          }
+          throw new Error(err.message);
+        });
+      }
+
       const res = await fetch("/api/chat", methodObj);
 
       if (!res.ok) {
         const data = await res.json();
-        if (userInfo && res.status === 401) {
-          await refreshAccessToken().then(({ AccToken, message, expiresAt }) => {
-            if (AccToken) {
-              setAccessSecret(AccToken);
-              localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: userInfo.userEmail, expiresAt: expiresAt }));
-            }
-            else if (message) throw new Error(message);
-          }).catch(err => {
-            if (err.message.includes("Refresh Token expired") || err.messae.includes("Invalid")) {
-              setPerfLogOut(true);
-            }
-            throw new Error(err.message);
-          });
-        } else {
-          throw new Error(data.message || "Request failed.");
-        }
+        throw new Error(data.message || "Chat generate AI response text Request failed.");
       }
 
       if (!res.body) {
@@ -110,7 +110,7 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
       if (isAbort) {
         setConversations(prev => prev.slice(0, -2));
         abortControllerRef.current = null;
-        console.error("Generation aborted by user");
+        console.log("Generation aborted by user");
       } else {
         console.error("Generate Response Error. Err: ", err);
       }
@@ -148,9 +148,9 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
           <PromptTextField name="LLMInput" id="IIFLLM" placeholder="Ask anything..." inputStyles="absolute z-30 bottom-5 w-full no-scrollbar" value={userPrompt} sendPrompt={sendUserPrompt} onEventChange={field_cng_event} />
           {
             dBtnDisabled ?
-            <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={userPrompt.length === 0} onClick={sendUserPrompt}><LuSendHorizontal /></button>
-            :
-            <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+              <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={userPrompt.length === 0} onClick={sendUserPrompt}><LuSendHorizontal /></button>
+              :
+              <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
           }
         </> : <Loading defaultIcon={true} loadingIconStyles="text-5xl" />
       }

@@ -105,6 +105,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     });
   } catch (error) {
     const { message, statusCode } = serverError("Error from /api/chat", "Invalid Request", "Invalid state", "aborted", "", error, 400, 400, 499, 0);
-    return new Response(JSON.stringify({ error: message }), { status: statusCode, headers: { "Content-Type": "application/json" } });
+    return new Response(JSON.stringify({ message }), { status: statusCode, headers: { "Content-Type": "application/json" } });
   }
 }

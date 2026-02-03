@@ -30,7 +30,10 @@ export function isAccessTokenValid() {
   if (!userInfo) return false;
   const parsedUserInfo = JSON.parse(userInfo);
 
-  return Date.now() < Number(parsedUserInfo.expiresAt);
+  const expiresAt = Number(parsedUserInfo.expiresAt);
+  const oneMinute = 60 * 1000;
+
+  return Date.now() < (expiresAt - oneMinute);
 };
 
 
