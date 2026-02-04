@@ -17,7 +17,9 @@ interface AuthContextValues {
     userInfo: UserInfoData | null;
     setUserInfo: (info: UserInfoData) => void;
     accessSecret: string | null;
-    convId: convIdObj;
+    convStorage: StoredConvs[];
+    setConvStorage: React.Dispatch<React.SetStateAction<StoredConvs[]>>;
+    convId: ConvIdObj;
     setConvId: (conValue: string, rsValue?: boolean) => void;
     googlePopup: () => Promise<UserCredential>;
     setPerfLogOut: (value: boolean) => void;
@@ -34,9 +36,19 @@ export interface UserInfoData {
     paymentExp: number | null;
 }
 
-interface convIdObj {
+interface ConvIdObj {
     conversationId: string | null;
     reloadSession: boolean;
+}
+
+interface StorObjStruct {
+    role: "user" | "assistant";
+    content: string;
+}
+
+interface StoredConvs {
+    convId: string;
+    storage: StorObjStruct[];
 }
 
 const AuthContext = createContext<AuthContextValues | null>(null);
@@ -49,7 +61,8 @@ googleAuthProvider.setCustomParameters({
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
-    const [convId, _setConvId] = useState<convIdObj>({ conversationId: null, reloadSession: false });;
+    const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false });
+    const [convStorage, setConvStorage] = useState<StoredConvs[]>([]);
 
     const setConvId = (conValue: string, rsValue: boolean = false) => {
         _setConvId({ conversationId: conValue, reloadSession: rsValue });
@@ -171,7 +184,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"

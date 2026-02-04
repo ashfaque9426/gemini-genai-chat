@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     try {
         const { decoded, error, message, status } = verifyJWT(req, "Access");
         if (error || !decoded) {
-            return NextResponse.json({ messages: null, message }, { status });
+            return NextResponse.json({ items: null, message }, { status });
         }
 
         const convId = req.nextUrl.searchParams.get("convId");
@@ -24,13 +24,13 @@ export async function GET(req: NextRequest) {
         const result = await Message.find({ conversationId: convID, uid: decoded.uid }).select("role content -_id").lean();
 
         if (!result.length) {
-            throw new Error("Unable to find messages. Please try again later");
+            throw new Error("Unable to find items. Please try again later");
         }
 
-        return NextResponse.json({ messages: result, message: "" }, { status: 201 });
+        return NextResponse.json({ items: result, message: "" }, { status: 201 });
     }
     catch (err) {
         const { message, statusCode } = serverError("Error from /api/get-conversation", "Invalid", "required", "find", "", err, 400, 400, 404, 0);
-        return NextResponse.json({ messages: null, message }, { status: statusCode });
+        return NextResponse.json({ items: null, message }, { status: statusCode });
     }
 }

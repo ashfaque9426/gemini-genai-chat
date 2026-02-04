@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import PromptTextField from "./PromptTextField";
 import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
@@ -9,19 +9,31 @@ import cn from "@/utils/clsx";
 import useAuth from "@/hooks/useAuth";
 import Loading from "../Loading/Loading";
 import { refreshAccessToken } from "@/lib/api/auth.api";
-import { isAccessTokenValid, showToastMsg } from "@/utils/utilityFunc/utilityFunc";
+import { clientErrMsg, isAccessTokenValid, showToastMsg } from "@/utils/utilityFunc/utilityFunc";
 import { lsUserInfoStr } from "@/utils/constants/constants";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
-interface chatCompTypes {
+interface chatCompProps {
   chatCompStyles?: string;
 }
 
-export default function ChatComp({ chatCompStyles }: chatCompTypes) {
+interface RequestInit {
+  method: string;
+  body: string;
+  signal: AbortSignal;
+  headers?: {
+    "Content-Type"?: string;
+    Authorization?: string;
+  };
+}
+
+export default function ChatComp({ chatCompStyles }: chatCompProps) {
   const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
 
-  const { contextLoading, userInfo, convId, setConvId, setAccessSecret, setPerfLogOut } = useAuth();
+  const convIdHolder = useRef("");
+
+  const { contextLoading, userInfo, accessSecret, convId, convStorage, setConvId, setAccessSecret, setConvStorage, setPerfLogOut } = useAuth();
   const axiosSecure = useAxiosSecure();
 
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -49,7 +61,7 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
     setdBtnDisabled(false);
     setUserPrompt("");
 
-    const methodObj = {
+    const methodObj: RequestInit = {
       method: "POST",
       body: JSON.stringify({
         messages: arrayToSend
@@ -73,6 +85,13 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
           }
           throw new Error(err.message);
         });
+      }
+
+      if (userInfo) {
+        methodObj.headers = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessSecret}`,
+        };
       }
 
       const res = await fetch("/api/chat", methodObj);
@@ -121,7 +140,8 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
         if (error) {
           showToastMsg("error", "Failed to save the latest conversation in the database.");
           console.error(message);
-        } else if (conversationId) {
+        } else if ((!convIdHolder.current && conversationId)) {
+          convIdHolder.current = conversationId;
           setConvId(conversationId, true);
         }
       }
@@ -130,6 +150,45 @@ export default function ChatComp({ chatCompStyles }: chatCompTypes) {
       setdBtnDisabled(true);
     }
   }
+
+  useEffect(() => {
+    const convFound = convStorage.find(item => item.convId === convId.conversationId);
+
+    const fetchConvs = async () => {
+      try {
+        if (!convId.conversationId) return;
+        const { items, message } = (await axiosSecure.get("/get-conversation")).data;
+        if (message) throw new Error(message);
+        if (items) {
+          setConversations(items);
+          const convObj = {
+            convId: convId.conversationId,
+            storage: items
+          }
+          setConvStorage(prev => [convObj, ...prev]);
+        }
+      }
+      catch(err) {
+        clientErrMsg(err, "Error from fetchConv function.");
+      }
+    }
+
+    if (convId.conversationId === null || (convIdHolder.current && convIdHolder.current !== convId.conversationId)) {
+      setConversations([]);
+      setUserPrompt("");
+      setdBtnDisabled(true);
+      convIdHolder.current = "";
+    }
+
+    if (convId.conversationId !== null) {
+      if (convFound) {
+        setConversations(convFound.storage);
+      }
+      else {
+        fetchConvs();
+      }
+    }
+  }, [convId, convStorage, axiosSecure, setConvStorage]);
 
   return (
     <div className={cn("relative", chatCompStyles)}>
