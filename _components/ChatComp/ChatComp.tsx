@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import PromptTextField from "./PromptTextField";
-import { v4 as uuidv4 } from 'uuid';
 import { ImStop } from "react-icons/im";
 import { LuSendHorizontal } from "react-icons/lu";
 import MarkdownRenderer from "./MarkDownRenderer";
@@ -12,6 +11,7 @@ import { refreshAccessToken } from "@/lib/api/auth.api";
 import { clientErrMsg, isAccessTokenValid, showToastMsg } from "@/utils/utilityFunc/utilityFunc";
 import { lsUserInfoStr } from "@/utils/constants/constants";
 import useAxiosSecure from "@/hooks/useAxiosSecure";
+import { Chats } from "@/providers/AuthProvider";
 interface chatCompProps {
   chatCompStyles?: string;
 }
@@ -27,38 +27,121 @@ interface RequestInit {
 }
 
 export default function ChatComp({ chatCompStyles }: chatCompProps) {
-  const [conversations, setConversations] = useState<{ role: string; content: string }[]>([]);
   const [userPrompt, setUserPrompt] = useState("");
   const [dBtnDisabled, setdBtnDisabled] = useState(true);
 
   const convIdHolder = useRef("");
+  const tempConvArr = useRef<Chats[]>([]);
 
-  const { contextLoading, userInfo, accessSecret, convId, convStorage, setConvId, setAccessSecret, setConvStorage, setPerfLogOut } = useAuth();
+  const { contextLoading, userInfo, accessSecret, convId, convStorage, generatingConvIds, userPromptArr, setConvId, setAccessSecret, setConvStorage, setgeneratingConvIds, setUserPromptArr, setPerfLogOut } = useAuth();
   const axiosSecure = useAxiosSecure();
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
 
   function field_cng_event(e: React.FormEvent<HTMLTextAreaElement>) {
     const userPrompt = (e.target as HTMLTextAreaElement).value || "";
     setUserPrompt(userPrompt);
+
+    if (!convId.conversationId) return;
+
+    setUserPromptArr(prev => {
+      const idx = prev.findIndex(p => p.convId === convId.conversationId);
+
+      if (idx === -1) {
+        return [...prev, { convId: convId.conversationId as string, userPrompt }];
+      }
+
+      const updated = [...prev];
+      updated[idx] = { ...updated[idx], userPrompt };
+      return updated;
+    });
+
+  }
+
+  function abortCurrentChat() {
+    const targetConvId = convIdHolder.current || "logOutChat";
+    abortControllersRef.current.get(targetConvId)?.abort();
+    abortControllersRef.current.delete(targetConvId);
   }
 
   async function sendUserPrompt() {
     if (!dBtnDisabled || userPrompt === "" || (userPrompt !== "" && userPrompt.trim().length === 0)) return;
-    abortControllerRef.current?.abort();
+    abortCurrentChat();
 
+    const streamingConvId = convIdHolder.current;
     const controller = new AbortController();
-    abortControllerRef.current = controller;
+    abortControllersRef.current.set(streamingConvId, controller);
 
-    setConversations(prev => [
-      ...prev,
-      { role: "user", content: userPrompt },
-      { role: "assistant", content: "" }
-    ]);
 
-    const arrayToSend = [...conversations, { role: "user", content: userPrompt }];
+    setgeneratingConvIds(prev => [...prev, streamingConvId]);
+    const promptId = crypto.randomUUID();
+    const resId = crypto.randomUUID();
+    if (userInfo) {
+      setConvStorage(prev => {
+        const index = prev.findIndex(
+          conv => conv.convId === convId.conversationId
+        );
 
-    setdBtnDisabled(false);
+        if (index === -1) {
+          return [
+            ...prev,
+            {
+              convId: streamingConvId,
+              chats: [
+                { _id: promptId, role: "user", content: userPrompt },
+                { _id: resId, role: "assistant", content: "" },
+              ],
+            },
+          ];
+        }
+
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          chats: [
+            ...updated[index].chats,
+            { _id: promptId, role: "user", content: userPrompt },
+            { _id: resId, role: "assistant", content: "" },
+          ],
+        };
+
+        return updated;
+      });
+
+    } else {
+      setConvStorage(prev => {
+        const hasTemp = prev.some(conv => conv.convId === "logOutChat");
+
+        if (!hasTemp) {
+          return [
+            ...prev,
+            {
+              convId: "logOutChat",
+              chats: [
+                { _id: promptId, role: "user", content: userPrompt },
+                { _id: resId, role: "assistant", content: "" },
+              ],
+            },
+          ];
+        }
+
+        return prev.map(conv =>
+          conv.convId === "logOutChat"
+            ? {
+              ...conv,
+              chats: [
+                ...conv.chats,
+                { _id: promptId, role: "user", content: userPrompt },
+                { _id: resId, role: "assistant", content: "" },
+              ],
+            }
+            : conv
+        );
+      });
+    }
+
+    const arrayToSend = [...tempConvArr.current, { role: "user", content: userPrompt }];
+
     setUserPrompt("");
 
     const methodObj: RequestInit = {
@@ -115,80 +198,128 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
         const chunk = decoder.decode(value);
         resStr += chunk;
 
-        setConversations(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            ...updated[updated.length - 1],
-            content: resStr,
-          };
-          return updated;
-        });
+        setConvStorage(prev =>
+          prev.map(conv => {
+            const targetConvId = userInfo ? streamingConvId : "logOutChat";
+            if (conv.convId !== targetConvId) return conv;
+
+            const storage = [...conv.chats];
+            const lastIndex = storage.length - 1;
+
+            if (lastIndex < 0 || storage[lastIndex].role !== "assistant") return conv;
+
+            storage[lastIndex] = {
+              ...storage[lastIndex],
+              content: storage[lastIndex].content + chunk,
+            };
+
+            return { ...conv, chats: storage };
+          })
+        );
       }
     } catch (err) {
       const isAbort = err instanceof DOMException && err.name === "AbortError" || err instanceof Error && err.name === "AbortError";
       if (isAbort) {
-        setConversations(prev => prev.slice(0, -2));
-        abortControllerRef.current = null;
+        setConvStorage(prev => prev.map(conv => {
+          const targetConvId = userInfo ? streamingConvId : "logOutChat";
+          if (conv.convId !== targetConvId) return conv;
+
+          const storage = [...conv.chats].slice(0, -2);
+
+          return { ...conv, chats: storage };
+        }));
+
+        const targetConvId = streamingConvId || "logOutChat";
+        abortControllersRef.current.delete(targetConvId);
+
         console.log("Generation aborted by user");
       } else {
         console.error("Generate Response Error. Err: ", err);
       }
     } finally {
-      if (!controller.signal.aborted && userInfo && convId.conversationId) {
+      if (convId.conversationId) setgeneratingConvIds(prev => prev.filter(strId => strId !== convId.conversationId));
+      else setgeneratingConvIds(prev => prev.filter(strId => strId !== streamingConvId));
+
+      const wasAborted = controller.signal.aborted;
+
+      if (!wasAborted && userInfo && convId.conversationId) {
         const { conversationId, error, message } = (await axiosSecure.post('/save-conversation', { conversationId: convId.conversationId, userPrompt, responseText: resStr })).data;
 
         if (error) {
           showToastMsg("error", "Failed to save the latest conversation in the database.");
           console.error(message);
-        } else if ((!convIdHolder.current && conversationId)) {
-          convIdHolder.current = conversationId;
+        } else if (!streamingConvId && conversationId) {
           setConvId(conversationId, true);
+          setConvStorage(prev => prev.map(item => item.convId === "" ? { ...item, convId: conversationId } : item));
+          convIdHolder.current = conversationId;
+        } else if (streamingConvId === conversationId) {
+          setConvId(conversationId)
         }
       }
 
-      abortControllerRef.current = null;
-      setdBtnDisabled(true);
+      const targetConvId = streamingConvId || "logOutChat";
+      abortControllersRef.current.delete(targetConvId);
     }
   }
 
   useEffect(() => {
-    const convFound = convStorage.find(item => item.convId === convId.conversationId);
-
     const fetchConvs = async () => {
       try {
         if (!convId.conversationId) return;
         const { items, message } = (await axiosSecure.get("/get-conversation")).data;
         if (message) throw new Error(message);
         if (items) {
-          setConversations(items);
           const convObj = {
             convId: convId.conversationId,
-            storage: items
+            chats: items
           }
-          setConvStorage(prev => [convObj, ...prev]);
+          setConvStorage(prev => [...prev, convObj]);
+          tempConvArr.current = items;
+          convIdHolder.current = convId.conversationId;
         }
       }
-      catch(err) {
+      catch (err) {
         clientErrMsg(err, "Error from fetchConv function.");
       }
     }
 
-    if (convId.conversationId === null || (convIdHolder.current && convIdHolder.current !== convId.conversationId)) {
-      setConversations([]);
-      setUserPrompt("");
-      setdBtnDisabled(true);
+    if (convId.conversationId === null) {
+      tempConvArr.current = [];
       convIdHolder.current = "";
+      setUserPrompt("");
+      return;
     }
 
-    if (convId.conversationId !== null) {
-      if (convFound) {
-        setConversations(convFound.storage);
-      }
-      else {
-        fetchConvs();
-      }
+    const existing = convStorage.find(item => item.convId === convId.conversationId);
+
+    if (existing) {
+      tempConvArr.current = existing.chats;
+      convIdHolder.current = convId.conversationId;
+    } else {
+      fetchConvs();
     }
   }, [convId, convStorage, axiosSecure, setConvStorage]);
+
+  useEffect(() => {
+    const isGenerating = generatingConvIds.includes(convIdHolder.current);
+    setdBtnDisabled(!isGenerating);
+  }, [generatingConvIds]);
+
+  useEffect(() => {
+    if (!convId.conversationId) {
+      setUserPrompt("");
+      return;
+    }
+
+    const stored = userPromptArr.find(prompt => prompt.convId === convId.conversationId);
+
+    setUserPrompt(stored?.userPrompt ?? "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [convId.conversationId]);
+
+  const activeConv = convStorage.find(conv => userInfo ? conv.convId === convId.conversationId : conv.convId === "logOutChat");
+
+  const messages = activeConv?.chats ?? [];
 
   return (
     <div className={cn("relative", chatCompStyles)}>
@@ -196,7 +327,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
         !contextLoading ? <>
           <div className="h-[87%] overflow-y-auto no-scrollbar">
             {
-              conversations.length > 0 ? conversations.map(message => message.role === "user" ? <pre key={`user-prompt${uuidv4()}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${uuidv4()}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">
+              (messages.length > 0) ? messages.map(message => message.role === "user" ? <pre key={`user-prompt${message._id}`} className="my-5 p-3 text-wrap border border-gray-500 rounded-lg">{message.content}</pre> : <MarkdownRenderer key={`LLM-Response${message._id}`} text={message.content} />) : <div className="w-full h-full flex justify-center items-center">
                 {
                   userInfo ? <p className="text-3xl font-semibold">What can I help you with?</p> : <p className="text-3xl font-semibold">Please Login to save your conversation.</p>
                 }
@@ -209,7 +340,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
             dBtnDisabled ?
               <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={userPrompt.length === 0} onClick={sendUserPrompt}><LuSendHorizontal /></button>
               :
-              <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortControllerRef.current?.abort()}><ImStop /></button>
+              <button className="absolute right-2 bottom-7.5 z-50 text-3xl cursor-pointer disabled:cursor-not-allowed" disabled={dBtnDisabled} onClick={() => abortCurrentChat()}><ImStop /></button>
           }
         </> : <Loading defaultIcon={true} loadingIconStyles="text-5xl" />
       }

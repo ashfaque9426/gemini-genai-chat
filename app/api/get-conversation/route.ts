@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
         const convID = new Types.ObjectId(convId);
 
-        const result = await Message.find({ conversationId: convID, uid: decoded.uid }).select("role content -_id").lean();
+        const result = await Message.find({ conversationId: convID, uid: decoded.uid }).select("role content").lean();
 
         if (!result.length) {
             throw new Error("Unable to find items. Please try again later");

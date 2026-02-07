@@ -13,17 +13,21 @@ import "react-toastify/dist/ReactToastify.css";
 
 interface AuthContextValues {
     contextLoading: boolean,
-    setContextLoading: (value: boolean) => void;
+    setContextLoading: React.Dispatch<React.SetStateAction<boolean>>;
     userInfo: UserInfoData | null;
-    setUserInfo: (info: UserInfoData) => void;
+    setUserInfo: React.Dispatch<React.SetStateAction<UserInfoData | null>>;
     accessSecret: string | null;
+    generatingConvIds: string[];
+    setgeneratingConvIds: React.Dispatch<React.SetStateAction<string[]>>;
     convStorage: StoredConvs[];
     setConvStorage: React.Dispatch<React.SetStateAction<StoredConvs[]>>;
+    userPromptArr: UserPrompt[];
+    setUserPromptArr: React.Dispatch<React.SetStateAction<UserPrompt[]>>;
     convId: ConvIdObj;
     setConvId: (conValue: string, rsValue?: boolean) => void;
     googlePopup: () => Promise<UserCredential>;
-    setPerfLogOut: (value: boolean) => void;
-    setAccessSecret: (value: string) => void
+    setPerfLogOut: React.Dispatch<React.SetStateAction<boolean>>;
+    setAccessSecret: React.Dispatch<React.SetStateAction<string | null>>;
 }
 
 export interface UserInfoData {
@@ -41,14 +45,20 @@ interface ConvIdObj {
     reloadSession: boolean;
 }
 
-interface StorObjStruct {
+export interface Chats {
+    _id: string;
     role: "user" | "assistant";
     content: string;
 }
 
-interface StoredConvs {
+export interface StoredConvs {
     convId: string;
-    storage: StorObjStruct[];
+    chats: Chats[];
+}
+
+export interface UserPrompt {
+    convId: string;
+    userPrompt: string;
 }
 
 const AuthContext = createContext<AuthContextValues | null>(null);
@@ -62,7 +72,9 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
     const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false });
+    const [generatingConvIds, setgeneratingConvIds] = useState<string[]>([]);
     const [convStorage, setConvStorage] = useState<StoredConvs[]>([]);
+    const [userPromptArr, setUserPromptArr] = useState<UserPrompt[]>([]);
 
     const setConvId = (conValue: string, rsValue: boolean = false) => {
         _setConvId({ conversationId: conValue, reloadSession: rsValue });
@@ -170,6 +182,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
                     });
                     localStorage.setItem(loginStatusLsStr, "loggedIn");
                     localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: currentUser.email, expiresAt: tokenExpiration }));
+                    setConvStorage(prev => prev.filter(conv => conv.convId !== "logOutChat"));
                 }
             }
             catch (err) {
@@ -184,7 +197,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, generatingConvIds, setgeneratingConvIds, userPromptArr, setUserPromptArr, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"
