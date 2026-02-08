@@ -2,7 +2,9 @@
 import useAuth from '@/hooks/useAuth';
 import cn from '@/utils/clsx';
 import { useEffect, useRef, useState } from 'react';
-import { ImSpinner3 } from "react-icons/im";
+import { ImSpinner2, ImSpinner3 } from "react-icons/im";
+import FormComp from './FormComp';
+import { IoIosSettings } from 'react-icons/io';
 interface asidebarTypes {
   asidebarStyles?: string
 }
@@ -18,7 +20,8 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
   const [menuItems, setMenuItems] = useState<ItemObj[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
-  const { convId, setConvId } = useAuth();
+  const [showFormIds, setShowFormIds] = useState<string[]>([]);
+  const { convId, setConvId, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
 
   useEffect(() => {
@@ -62,7 +65,24 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
       {
         (!loading && menuItems.length > 0) && <ul>
           {
-            menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>{itemObj.title}</li>))
+            menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>
+              <div className='flex items-center gap-2'>
+                <span className='text-lg'>{itemObj.title}</span>
+                {
+                  generatingConvIds.includes(itemObj._id) && <span><ImSpinner2 className='animate-spin' /></span>
+                }
+
+                {
+                  !generatingConvIds.includes(itemObj._id) && !showFormIds.includes(itemObj._id) && <span>
+                    <IoIosSettings onClick={() => setShowFormIds(prev => [...prev, itemObj._id])} />
+                  </span>
+                }
+
+                {
+                  showFormIds.includes(itemObj._id) && <FormComp title={itemObj.title} id={itemObj._id} setShowCIDS={setShowFormIds} />
+                }
+              </div>
+            </li>))
           }
         </ul>
       }

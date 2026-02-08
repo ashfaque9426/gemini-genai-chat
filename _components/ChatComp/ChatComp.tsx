@@ -140,7 +140,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
       });
     }
 
-    const arrayToSend = [...tempConvArr.current, { role: "user", content: userPrompt }];
+    const arrayToSend = [...tempConvArr.current, { _id: promptId, role: "user", content: userPrompt }];
 
     setUserPrompt("");
 
