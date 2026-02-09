@@ -20,7 +20,7 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
   const [menuItems, setMenuItems] = useState<ItemObj[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
-  const [showFormIds, setShowFormIds] = useState<string[]>([]);
+  const [showFormId, setShowFormId] = useState<string>("");
   const { convId, setConvId, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
 
@@ -73,13 +73,13 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
                 }
 
                 {
-                  !generatingConvIds.includes(itemObj._id) && !showFormIds.includes(itemObj._id) && <span>
-                    <IoIosSettings onClick={() => setShowFormIds(prev => [...prev, itemObj._id])} />
+                  (!generatingConvIds.includes(itemObj._id) && showFormId !== itemObj._id) && <span>
+                    <IoIosSettings onClick={() => setShowFormId(itemObj._id)} />
                   </span>
                 }
 
                 {
-                  showFormIds.includes(itemObj._id) && <FormComp title={itemObj.title} id={itemObj._id} setShowCIDS={setShowFormIds} />
+                  (showFormId === itemObj._id) && <FormComp title={itemObj.title} id={itemObj._id} setShowCID={setShowFormId} />
                 }
               </div>
             </li>))
