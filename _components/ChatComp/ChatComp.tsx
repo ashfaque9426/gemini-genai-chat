@@ -156,6 +156,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
 
     try {
       if (userInfo && !isAccessTokenValid()) {
+        let refreshExpired = false;
         await refreshAccessToken().then(({ AccToken, message, expiresAt }) => {
           if (AccToken) {
             setAccessSecret(AccToken);
@@ -163,10 +164,14 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
           }
           else if (message) throw new Error(message);
         }).catch(err => {
-          if (err.message.includes("Refresh Token expired") || err.messae.includes("Invalid")) {
+          if (err.message.includes("Refresh Token expired") || err.message.includes("Invalid")) {
             setPerfLogOut(true);
+            if (err.message.includes("Refresh Token expired")) refreshExpired = true;
           }
-          throw new Error(err.message);
+          if (refreshExpired) {
+            showToastMsg("info", "User Session Expired. Please login again.");
+          }
+          else throw new Error(err.message);
         });
       }
 
@@ -279,7 +284,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
         }
       }
       catch (err) {
-        clientErrMsg(err, "Error from fetchConv function.");
+        clientErrMsg(err, "Error from fetchConv function.", true);
       }
     }
 
@@ -314,7 +319,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
     const stored = userPromptArr.find(prompt => prompt.convId === convId.conversationId);
 
     setUserPrompt(stored?.userPrompt ?? "");
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convId.conversationId]);
 
   const activeConv = convStorage.find(conv => userInfo ? conv.convId === convId.conversationId : conv.convId === "logOutChat");

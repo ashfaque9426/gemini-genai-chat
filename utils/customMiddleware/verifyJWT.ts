@@ -8,9 +8,12 @@ interface VerifyJWTResult {
   status: number;
 }
 
-interface JWTPayload extends JwtPayload {
+export interface JWTPayload extends JwtPayload {
   uid: string;
   userEmail: string;
+  sessionType: string;
+  paymentTire: string;
+  paymentExp: number | null;
 }
 
 

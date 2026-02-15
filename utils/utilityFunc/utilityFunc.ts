@@ -15,13 +15,13 @@ export function isValidEmail(email: string): email is Email {
 }
 
 
-export function clientErrMsg(err: ErrorInput, errStr: string): string {
-    console.error(errStr, err);
+export function clientErrMsg(err: ErrorInput, errStr: string, showError: boolean = false): string {
     let message = errStr;
     if (err instanceof Error) {
         message += ' Err: ' + err.message;
     }
 
+    if (showError) console.error(message, err);
     return message;
 }
 
@@ -31,9 +31,7 @@ export function isAccessTokenValid() {
   const parsedUserInfo = JSON.parse(userInfo);
 
   const expiresAt = Number(parsedUserInfo.expiresAt);
-  const oneMinute = 60 * 1000;
-
-  return Date.now() < (expiresAt - oneMinute);
+  return Date.now() < expiresAt;
 };
 
 
