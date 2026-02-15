@@ -41,19 +41,20 @@ function FormComp({ title, id, setShowCID }: FormProps) {
     const checkToken = async (): Promise<{ success: boolean }> => {
         try {
             let refreshExpired = false;
-            let success = false;
-            if (userInfo && !isAccessTokenValid()) {
+            let success = true;
+            if (!userInfo) success = false;
+            else if (userInfo && !isAccessTokenValid()) {
                 await refreshAccessToken().then(({ AccToken, message, expiresAt }) => {
                     if (AccToken) {
                         setAccessSecret(AccToken);
                         localStorage.setItem(lsUserInfoStr, JSON.stringify({ userEmail: userInfo.userEmail, expiresAt: expiresAt }));
-                        success = true;
                     }
                     else if (message) throw new Error(message);
                 }).catch(err => {
                     if (err.message.includes("Refresh Token expired") || err.message.includes("Invalid")) {
                         setPerfLogOut(true);
                         if(err.message.includes("Refresh Token expired")) refreshExpired = true;
+                        success = false;
                     }
                     if (refreshExpired) {
                         showToastMsg("info", "User Session Expired. Please login again.");
@@ -70,7 +71,7 @@ function FormComp({ title, id, setShowCID }: FormProps) {
     }
 
     const initializeServAction = async () => {
-        const {success} = await checkToken();
+        const { success } = await checkToken();
         if (!success) return;
         try {
 
@@ -81,7 +82,7 @@ function FormComp({ title, id, setShowCID }: FormProps) {
     }
 
     const initializeDelAction = async () => {
-        const {success} = await checkToken();
+        const { success } = await checkToken();
         if (!success) return;
         try {
             
