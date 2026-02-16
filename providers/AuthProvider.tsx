@@ -94,6 +94,10 @@ function AuthProvider({ children }: { children: ReactNode }) {
             setAccessSecret(null);
             await clearRFSHToken(userInfo);
             setUserInfo(null);
+            _setConvId({ conversationId: null, reloadSession: false });
+            setgeneratingConvIds([]);
+            setConvStorage([]);
+            setUserPromptArr([]);
             localStorage.setItem(loginStatusLsStr, "loggedOut");
             localStorage.removeItem(lsUserInfoStr);
         } catch (err) {

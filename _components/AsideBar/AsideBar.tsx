@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ImSpinner2, ImSpinner3 } from "react-icons/im";
 import FormComp from './FormComp';
 import { IoIosSettings } from 'react-icons/io';
+import { PiSidebarDuotone } from "react-icons/pi";
 interface asidebarTypes {
   asidebarStyles?: string
 }
@@ -21,11 +22,13 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
   const [showFormId, setShowFormId] = useState<string>("");
-  const { convId, setConvId, generatingConvIds } = useAuth();
+  const {userInfo, convId, setConvId, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
 
+
+
   useEffect(() => {
-    if (firstLoad && !convId.reloadSession) return;
+    if (userInfo && firstLoad && !convId.reloadSession) return;
 
     const sortConv = () => {
       if (menuItems[0]._id === convId.conversationId) return;
@@ -37,6 +40,14 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
     }
 
     const fetchConversations = async () => {
+      if (!userInfo) {
+        setMenuItems([]);
+        setShowFormId("");
+        setFirstLoad(false);
+        setLoading(false);
+        convIds.current = [];
+        return;
+      }
       setFirstLoad(true);
       setLoading(true);
       // later will fetch the real array of documents
@@ -53,7 +64,7 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
       fetchConversations();
     }
 
-  }, [convId, firstLoad, menuItems]);
+  }, [userInfo, convId, firstLoad, menuItems]);
 
   return (
     <aside className={cn("px-2", asidebarStyles)}>
@@ -63,7 +74,9 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
       }
 
       {
-        (!loading && menuItems.length > 0) && <ul>
+        (!loading && menuItems.length > 0) && <>
+          <button><PiSidebarDuotone className='text-2xl' /></button>
+          <ul>
           {
             menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>
               <div className='flex items-center gap-2'>
@@ -85,6 +98,7 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
             </li>))
           }
         </ul>
+        </>
       }
 
       {
