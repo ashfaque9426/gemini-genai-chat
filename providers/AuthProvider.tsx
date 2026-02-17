@@ -14,6 +14,8 @@ import "react-toastify/dist/ReactToastify.css";
 interface AuthContextValues {
     contextLoading: boolean,
     setContextLoading: React.Dispatch<React.SetStateAction<boolean>>;
+    showSidebar: boolean;
+    setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>;
     userInfo: UserInfoData | null;
     setUserInfo: React.Dispatch<React.SetStateAction<UserInfoData | null>>;
     accessSecret: string | null;
@@ -70,6 +72,7 @@ googleAuthProvider.setCustomParameters({
 
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
+    const [showSidebar, setShowSidebar] = useState(true);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
     const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false });
     const [generatingConvIds, setgeneratingConvIds] = useState<string[]>([]);
@@ -201,7 +204,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, generatingConvIds, setgeneratingConvIds, userPromptArr, setUserPromptArr, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, showSidebar, setShowSidebar, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, generatingConvIds, setgeneratingConvIds, userPromptArr, setUserPromptArr, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"

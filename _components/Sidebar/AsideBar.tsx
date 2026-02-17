@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import { ImSpinner2, ImSpinner3 } from "react-icons/im";
 import FormComp from './FormComp';
 import { IoIosSettings } from 'react-icons/io';
-import { PiSidebarDuotone } from "react-icons/pi";
-interface asidebarTypes {
-  asidebarStyles?: string
+
+interface asidebarProps {
+  asidebarStyles?: string;
 }
+
 interface ItemObj {
   _id: string;
   uid: string;
@@ -17,7 +18,7 @@ interface ItemObj {
   updatedAt: string;
 }
 
-function AsideBar({ asidebarStyles }: asidebarTypes) {
+function AsideBar({ asidebarStyles }: asidebarProps) {
   const [menuItems, setMenuItems] = useState<ItemObj[]>([]);
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
@@ -68,15 +69,14 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
 
   return (
     <aside className={cn("px-2", asidebarStyles)}>
-      <h2 className='text-2xl font-semibold'>Your Chats</h2>
       {
         loading && <ImSpinner3 className='text-xl animate-spin' />
       }
 
       {
-        (!loading && menuItems.length > 0) && <>
-          <button><PiSidebarDuotone className='text-2xl' /></button>
-          <ul>
+        (!loading && menuItems.length > 0) && <div className="flex flex-col h-full gap-2">
+          <h2 className='text-2xl text-center font-semibold mb-2'>Your chats</h2>
+          <ul className="flex-1 overflow-y-auto">
           {
             menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>
               <div className='flex items-center gap-2'>
@@ -98,7 +98,7 @@ function AsideBar({ asidebarStyles }: asidebarTypes) {
             </li>))
           }
         </ul>
-        </>
+        </div>
       }
 
       {

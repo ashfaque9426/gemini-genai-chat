@@ -3,9 +3,10 @@ import useAuth from "@/hooks/useAuth";
 import Image from "next/image";
 import Link from "next/link";
 import Loading from "../Loading/Loading";
+import { PiSidebarDuotone } from "react-icons/pi";
 
 function Header() {
-  const { contextLoading, userInfo, googlePopup, setContextLoading, setPerfLogOut } = useAuth();
+  const { contextLoading, showSidebar, userInfo, googlePopup, setContextLoading, setPerfLogOut, setShowSidebar } = useAuth();
 
   const photoURL = userInfo?.photoURL ?? '/assets/images/no_user.webp';
   const userName = userInfo?.userName && userInfo.userName.length > 16 ? userInfo.userName.slice(0, 15) + "..." : userInfo?.userName;
@@ -20,9 +21,12 @@ function Header() {
   return (
     <header className='px-5 py-3.5'>
       <div className='flex justify-between items-center'>
-        <Link href="/" className="text-2xl font-semibold">
-          <h1>GenAI</h1>
-        </Link>
+        <div className="flex gap-2">
+          { userInfo && <button onClick={() => setShowSidebar(!showSidebar)}><PiSidebarDuotone className='text-2xl' /></button> }
+          <Link href="/" className="text-2xl font-semibold">
+            <h1>GenAI</h1>
+          </Link>
+        </div>
         <section className='flex items-center gap-3'>
           {(contextLoading && !userInfo) && <Loading authIcon={true} loadingParentStyles="pe-16" loadingIconStyles="text-[40px]" />}
           {(!contextLoading && !userInfo) && <button onClick={handlePopup} disabled={userInfo || undefined} className='badge-dark'>Sign In With Google</button>}
