@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ImSpinner2, ImSpinner3 } from "react-icons/im";
 import FormComp from './FormComp';
 import { IoIosSettings } from 'react-icons/io';
+import { RxCross2 } from "react-icons/rx";
 
 interface asidebarProps {
   asidebarStyles?: string;
@@ -23,7 +24,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
   const [showFormId, setShowFormId] = useState<string>("");
-  const {userInfo, convId, setConvId, generatingConvIds } = useAuth();
+  const {userInfo, convId, setConvId, setShowSidebar, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
 
 
@@ -69,6 +70,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
 
   return (
     <aside className={cn("px-2", asidebarStyles)}>
+      <span className='absolute top-1.5 right-1.5'><RxCross2 onClick={() => setShowSidebar(false)} className='text-xl font-semibold hover:cursor-pointer' /></span>
       {
         loading && <ImSpinner3 className='text-xl animate-spin' />
       }

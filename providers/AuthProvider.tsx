@@ -72,7 +72,7 @@ googleAuthProvider.setCustomParameters({
 
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
-    const [showSidebar, setShowSidebar] = useState(true);
+    const [showSidebar, setShowSidebar] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
     const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false });
     const [generatingConvIds, setgeneratingConvIds] = useState<string[]>([]);
