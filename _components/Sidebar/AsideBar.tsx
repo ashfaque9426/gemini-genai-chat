@@ -128,10 +128,10 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
       {
         (!loading && menuItems.length > 0) && <div className="flex flex-col h-full gap-2">
           <h2 className='text-2xl text-center font-semibold mb-2'>Your chats</h2>
-          <div className='self-end'><IoAdd onClick={() => setMenuItems(prev => {
+          <button onClick={() => setMenuItems(prev => {
             if (prev[0].title !== "New Chat") return prev;
             return [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev];
-          })} className='text-2xl font-semibold' /></div>
+          })} className='self-end text-2xl font-semibold' ><IoAdd /></button>
           <ul ref={titlesRef} className="flex-1 overflow-y-auto">
             {
               menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>
