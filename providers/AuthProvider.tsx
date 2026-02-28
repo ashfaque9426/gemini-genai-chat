@@ -26,7 +26,7 @@ interface AuthContextValues {
     userPromptArr: UserPrompt[];
     setUserPromptArr: React.Dispatch<React.SetStateAction<UserPrompt[]>>;
     convId: ConvIdObj;
-    setConvId: (conValue: string, rsValue?: boolean) => void;
+    setConvId: (conValue: string, rsValue?: boolean, sort?: boolean) => void;
     googlePopup: () => Promise<UserCredential>;
     setPerfLogOut: React.Dispatch<React.SetStateAction<boolean>>;
     setAccessSecret: React.Dispatch<React.SetStateAction<string | null>>;
@@ -45,6 +45,7 @@ export interface UserInfoData {
 interface ConvIdObj {
     conversationId: string | null;
     reloadSession: boolean;
+    sort: boolean;
 }
 
 export interface Chats {
@@ -74,13 +75,13 @@ function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [showSidebar, setShowSidebar] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
-    const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false });
+    const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false, sort: false });
     const [generatingConvIds, setgeneratingConvIds] = useState<string[]>([]);
     const [convStorage, setConvStorage] = useState<StoredConvs[]>([]);
     const [userPromptArr, setUserPromptArr] = useState<UserPrompt[]>([]);
 
-    const setConvId = (conValue: string, rsValue: boolean = false) => {
-        _setConvId({ conversationId: conValue, reloadSession: rsValue });
+    const setConvId = (conValue: string, rsValue: boolean = false, sort: boolean = false) => {
+        _setConvId({ conversationId: conValue, reloadSession: rsValue, sort: sort });
     };
     
     const [accessSecret, setAccessSecret] = useState<string | null>(null);
@@ -97,7 +98,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
             setAccessSecret(null);
             await clearRFSHToken(userInfo);
             setUserInfo(null);
-            _setConvId({ conversationId: null, reloadSession: false });
+            _setConvId({ conversationId: null, reloadSession: false, sort: false });
             setgeneratingConvIds([]);
             setConvStorage([]);
             setUserPromptArr([]);

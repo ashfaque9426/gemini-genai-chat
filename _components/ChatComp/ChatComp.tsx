@@ -258,7 +258,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
           setConvStorage(prev => prev.map(item => item.convId === "" ? { ...item, convId: conversationId } : item));
           convIdHolder.current = conversationId;
         } else if (streamingConvId === conversationId) {
-          setConvId(conversationId)
+          setConvId(conversationId, false, true);
         }
       }
 
