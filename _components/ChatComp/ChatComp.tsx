@@ -247,7 +247,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
 
       const wasAborted = controller.signal.aborted;
 
-      if (!wasAborted && userInfo && convId.conversationId) {
+      if (!wasAborted && userInfo) {
         const { conversationId, error, message } = (await axiosSecure.post('/save-conversation', { conversationId: convId.conversationId, userPrompt, responseText: resStr })).data;
 
         if (error) {
@@ -322,7 +322,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [convId.conversationId]);
 
-  const activeConv = convStorage.find(conv => userInfo ? conv.convId === convId.conversationId : conv.convId === "logOutChat");
+  const activeConv = convStorage.find(conv => userInfo ? (conv.convId === convId.conversationId || conv.convId === "") : conv.convId === "logOutChat");
 
   const messages = activeConv?.chats ?? [];
 

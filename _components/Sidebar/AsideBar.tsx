@@ -48,7 +48,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
       setLoading(true);
 
       if (calledFrm === "fetchConvs") convStartEnd.current.start = 0;
-      const { conversations, message } = (await axiosSecure.get(`/get-conversation-history?start${convStartEnd.current.start}&end=${convStartEnd.current.end}`)).data;
+      const { conversations, message } = (await axiosSecure.get(`/get-conversation-history?start=${convStartEnd.current.start}&end=${convStartEnd.current.end}`)).data;
 
       if (message) {
         showToastMsg("error", message);
@@ -132,7 +132,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
           <button onClick={() => setMenuItems(prev => {
             if (prev[0].title !== "New Chat") return prev;
             return [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev];
-          })} className='self-end text-2xl font-semibold' ><IoAdd /></button>
+          })} className='flex justify-between items-center text-xl font-semibold'><span>New Chat</span> <IoAdd /></button>
 
           <ul ref={titlesRef} className="flex-1 overflow-y-auto">
             {
