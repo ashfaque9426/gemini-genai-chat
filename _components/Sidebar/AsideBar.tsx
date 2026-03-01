@@ -126,15 +126,17 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
       }
 
       {
-        (!loading && menuItems.length > 0) && <div className="flex flex-col h-full gap-2">
+        (!loading && menuItems.length > 0) && <div className="flex flex-col h-full gap-1.5">
           <h2 className='text-2xl text-center font-semibold mb-2'>Your chats</h2>
           
-          <button onClick={() => setMenuItems(prev => {
+          <section className='flex justify-between items-center gap-1.5 text-xl font-semibold'>
+            <span>New Chat</span>
+            <button className='hover:cursor-pointer' onClick={() => setMenuItems(prev => {
             if (prev[0].title !== "New Chat") return prev;
             return [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev];
-          })} className='flex justify-between items-center text-xl font-semibold'><span>New Chat</span> <IoAdd /></button>
+          })}><IoAdd /></button></section>
 
-          <ul ref={titlesRef} className="flex-1 overflow-y-auto">
+          <ul ref={titlesRef} className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
             {
               menuItems.map((itemObj: ItemObj) => (<li onClick={() => setConvId(itemObj._id)} key={itemObj._id}>
                 <div className='flex items-center gap-2'>
@@ -158,13 +160,13 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
           </ul>
 
           {
-            fetchMore && <ImSpinner3 className='text-xl animate-spin' />
+            fetchMore && <ImSpinner3 className='text-xl animate-spin mt-1.5' />
           }
         </div>
       }
 
       {
-        (!loading && menuItems.length === 0) && <p className='text-xl font-semibold'>No Conversation Avalilable</p>
+        (!loading && menuItems.length === 0) && <p className='text-xl font-semibold mt-2'>No Conversation Avalilable</p>
       }
 
     </aside>
