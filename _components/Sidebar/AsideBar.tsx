@@ -60,8 +60,15 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
 
       if (conversations) {
         const filteredIds = conversations.map((item: ItemObj) => item._id);
-        convIds.current = filteredIds;
-        setMenuItems(conversations);
+        
+        if (calledFrm === "fetchConvs") {
+          convIds.current = filteredIds;
+          setMenuItems(conversations);
+        } else if (calledFrm === "fetchMore") {
+          convIds.current = [...convIds.current, ...filteredIds];
+          setMenuItems(prev => [...prev, ...conversations]);
+        }
+        
         setLoading(false);
         setDisabledNCBtn(false);
       }
