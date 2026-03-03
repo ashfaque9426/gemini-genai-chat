@@ -164,7 +164,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
           </ul>
 
           {
-            fetchMore && <ImSpinner3 className='text-xl animate-spin mt-1.5' />
+            fetchMore && <ImSpinner3 className='text-lg animate-spin mt-1.5' />
           }
         </div>
       }
