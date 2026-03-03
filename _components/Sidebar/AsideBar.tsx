@@ -27,6 +27,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
   const [loading, setLoading] = useState(true);
   const [firstLoad, setFirstLoad] = useState(false);
   const [fetchMore, setFetchMore] = useState(false);
+  const [disabledNCBtn, setDisabledNCBtn] = useState(false);
   const [showFormId, setShowFormId] = useState<string>("");
   const { userInfo, convId, setConvId, setShowSidebar, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
@@ -41,6 +42,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
         setShowFormId("");
         setFirstLoad(false);
         setLoading(false);
+        setDisabledNCBtn(false);
         convIds.current = [];
         return;
       }
@@ -61,6 +63,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
         convIds.current = filteredIds;
         setMenuItems(conversations);
         setLoading(false);
+        setDisabledNCBtn(false);
       }
   }, [userInfo, axiosSecure]);
 
@@ -100,7 +103,8 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
       if (menuItems[0]._id === convId.conversationId) return;
       setLoading(true);
       const sortedConv = menuItems.find((itemObj: ItemObj) => itemObj._id === convId.conversationId);
-      const otherConvs = menuItems.filter((itemObj: ItemObj) => itemObj._id !== convId.conversationId && itemObj.title !== "New Chat");
+      const otherConvs = menuItems.filter((itemObj: ItemObj) => itemObj._id !== convId.conversationId);
+      if (otherConvs.some((item: ItemObj) => item.title === "New Chat")) setDisabledNCBtn(true);
       if (sortedConv) setMenuItems([sortedConv, ...otherConvs]);
       setLoading(false);
     }
@@ -131,7 +135,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
           
           <section className='flex justify-between items-center gap-1.5 text-xl font-semibold'>
             <span>New Chat</span>
-            <button className='hover:cursor-pointer' onClick={() => setMenuItems(prev => {
+            <button className='hover:cursor-pointer' disabled={disabledNCBtn} onClick={() => setMenuItems(prev => {
             if (prev[0].title !== "New Chat") return prev;
             return [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev];
           })}><IoAdd /></button></section>
