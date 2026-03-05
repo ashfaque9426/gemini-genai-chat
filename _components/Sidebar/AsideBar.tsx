@@ -29,7 +29,7 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
   const [fetchMore, setFetchMore] = useState(false);
   const [disabledNCBtn, setDisabledNCBtn] = useState(false);
   const [showFormId, setShowFormId] = useState<string>("");
-  const { userInfo, convId, setConvId, setShowSidebar, generatingConvIds } = useAuth();
+  const { userInfo, convId, addSidebarNC, setConvId, setShowSidebar, setAddSidebarNC, generatingConvIds } = useAuth();
   const convIds = useRef<string[]>([]);
   const convStartEnd = useRef({ start: 0, end: 10 });
   const titlesRef = useRef<HTMLUListElement | null>(null);
@@ -73,6 +73,16 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
         setDisabledNCBtn(false);
       }
   }, [userInfo, axiosSecure]);
+
+  useEffect(() => {
+    const menuItemSetter = () => {
+      setMenuItems(prev => [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev]);
+    }
+    if (addSidebarNC && (menuItems[0].title !== "New Chat")) {
+      menuItemSetter();
+      setAddSidebarNC(false);
+    }
+  }, [addSidebarNC, setAddSidebarNC, menuItems]);
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -138,14 +148,15 @@ function AsideBar({ asidebarStyles }: asidebarProps) {
 
       {
         (!loading && menuItems.length > 0) && <div className="flex flex-col h-full gap-1.5">
-          <h2 className='text-2xl text-center font-semibold mb-2'>Your chats</h2>
-          
           <section className='flex justify-between items-center gap-1.5 text-xl font-semibold'>
             <span>New Chat</span>
             <button className='hover:cursor-pointer' disabled={disabledNCBtn} onClick={() => setMenuItems(prev => {
-            if (prev[0].title !== "New Chat") return prev;
+            if (prev[0].title === "New Chat") return prev;
+            setConvId(null);
             return [{_id: "", uid: "", title: "New Chat", createdAt: "", updatedAt: ""}, ...prev];
           })}><IoAdd /></button></section>
+
+          <h2 className='text-2xl text-center font-semibold mb-2'>Your chats</h2>
 
           <ul ref={titlesRef} className="flex-1 flex flex-col gap-1.5 overflow-y-auto">
             {

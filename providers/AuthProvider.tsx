@@ -16,6 +16,8 @@ interface AuthContextValues {
     setContextLoading: React.Dispatch<React.SetStateAction<boolean>>;
     showSidebar: boolean;
     setShowSidebar: React.Dispatch<React.SetStateAction<boolean>>;
+    addSidebarNC: boolean;
+    setAddSidebarNC: React.Dispatch<React.SetStateAction<boolean>>;
     userInfo: UserInfoData | null;
     setUserInfo: React.Dispatch<React.SetStateAction<UserInfoData | null>>;
     accessSecret: string | null;
@@ -26,7 +28,7 @@ interface AuthContextValues {
     userPromptArr: UserPrompt[];
     setUserPromptArr: React.Dispatch<React.SetStateAction<UserPrompt[]>>;
     convId: ConvIdObj;
-    setConvId: (conValue: string, rsValue?: boolean, sort?: boolean) => void;
+    setConvId: (conValue: string | null, rsValue?: boolean, sort?: boolean) => void;
     googlePopup: () => Promise<UserCredential>;
     setPerfLogOut: React.Dispatch<React.SetStateAction<boolean>>;
     setAccessSecret: React.Dispatch<React.SetStateAction<string | null>>;
@@ -74,13 +76,14 @@ googleAuthProvider.setCustomParameters({
 function AuthProvider({ children }: { children: ReactNode }) {
     const [contextLoading, setContextLoading] = useState(true);
     const [showSidebar, setShowSidebar] = useState(false);
+    const [addSidebarNC, setAddSidebarNC] = useState(false);
     const [userInfo, setUserInfo] = useState<UserInfoData | null>(null);
     const [convId, _setConvId] = useState<ConvIdObj>({ conversationId: null, reloadSession: false, sort: false });
     const [generatingConvIds, setgeneratingConvIds] = useState<string[]>([]);
     const [convStorage, setConvStorage] = useState<StoredConvs[]>([]);
     const [userPromptArr, setUserPromptArr] = useState<UserPrompt[]>([]);
 
-    const setConvId = (conValue: string, rsValue: boolean = false, sort: boolean = false) => {
+    const setConvId = (conValue: string | null, rsValue: boolean = false, sort: boolean = false) => {
         _setConvId({ conversationId: conValue, reloadSession: rsValue, sort: sort });
     };
     
@@ -205,7 +208,7 @@ function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     return (
-        <AuthContext value={{ contextLoading, setContextLoading, showSidebar, setShowSidebar, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, generatingConvIds, setgeneratingConvIds, userPromptArr, setUserPromptArr, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
+        <AuthContext value={{ contextLoading, setContextLoading, showSidebar, setShowSidebar, addSidebarNC, setAddSidebarNC, userInfo, setUserInfo, convId, setConvId, convStorage, setConvStorage, generatingConvIds, setgeneratingConvIds, userPromptArr, setUserPromptArr, accessSecret, googlePopup, setPerfLogOut, setAccessSecret }}>
             {children}
             <ToastContainer
                 position="top-right"

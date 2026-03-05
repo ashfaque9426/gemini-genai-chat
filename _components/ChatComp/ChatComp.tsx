@@ -33,7 +33,7 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
   const convIdHolder = useRef("");
   const tempConvArr = useRef<Chats[]>([]);
 
-  const { contextLoading, userInfo, accessSecret, convId, convStorage, generatingConvIds, userPromptArr, setConvId, setAccessSecret, setConvStorage, setgeneratingConvIds, setUserPromptArr, setPerfLogOut } = useAuth();
+  const { contextLoading, userInfo, accessSecret, convId, convStorage, generatingConvIds, userPromptArr, setConvId, setAccessSecret, setConvStorage, setgeneratingConvIds, setUserPromptArr, setAddSidebarNC, setPerfLogOut } = useAuth();
   const axiosSecure = useAxiosSecure();
 
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
@@ -67,6 +67,8 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
   async function sendUserPrompt() {
     if (!dBtnDisabled || userPrompt === "" || (userPrompt !== "" && userPrompt.trim().length === 0)) return;
     abortCurrentChat();
+
+    if (convId.conversationId === null) setAddSidebarNC(true);
 
     const streamingConvId = convIdHolder.current;
     const controller = new AbortController();
