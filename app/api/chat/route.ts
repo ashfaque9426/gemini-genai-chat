@@ -32,15 +32,6 @@ export async function POST(req: NextRequest): Promise<Response> {
     }
   }
 
-  const sysPrompt = {
-    role: "system",
-    content: "You are a helpful assistant."
-  }
-
-  const model = genAI.getGenerativeModel({
-    model: "gemini-3-flash-preview",
-  });
-
   try {
     const { messages }: ChatRequestBody = await req.json();
 
@@ -51,14 +42,53 @@ export async function POST(req: NextRequest): Promise<Response> {
     const last = messages.at(-1);
     if (!last || last.role !== "user") throw new Error("Invalid state");
 
-    const messageArr = [sysPrompt, ...messages];
+    async function generateWithFallback(messages: ChatMessage[]) {
+      let lastError: unknown;
 
-    const result = await model.generateContentStream({
-      contents: messageArr.map((m: ChatMessage) => ({
-        role: m.role,
-        parts: [{ text: m.content }]
-      }))
-    });
+      const MODELS = ["gemini-3-flash-preview", "gemini-3.1-pro-preview", "gemini-3.1-flash-preview", "gemini-3.1-flash-lite-preview", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash"];
+
+      for (const modelName of MODELS) {
+        try {
+          const model = genAI.getGenerativeModel({
+            model: modelName,
+            systemInstruction: "You are a helpful assistant."
+          });
+
+          const result = await model.generateContentStream({
+            contents: messages.map((m) => ({
+              role: m.role === "assistant" ? "model" : "user",
+              parts: [{ text: m.content }]
+            }))
+          });
+
+          return {
+            result,
+            modelUsed: modelName
+          };
+        } catch (err: unknown) {
+          lastError = err;
+
+          function isRateLimitError(err: unknown): boolean {
+            if (typeof err === "object" && err !== null) {
+              const e = err as { status?: number; message?: string };
+
+              return (e.status === 429 || e.message?.includes("rate") || e.message?.includes("quota") || false);
+            }
+            return false;
+          }
+
+          if (!isRateLimitError(err)) {
+            throw err;
+          }
+
+          console.warn(`Model ${modelName} rate-limit reached. Trying next...`);
+        }
+      }
+
+      throw lastError;
+    }
+
+    const { result, modelUsed } = await generateWithFallback(messages);
 
     const encoder = new TextEncoder();
 
@@ -101,9 +131,17 @@ export async function POST(req: NextRequest): Promise<Response> {
         'Content-Type': "text/event-stream; charset=utf-8",
         'Cache-Control': "no-cache",
         'Connection': 'keep-alive',
+        "x-model-used": modelUsed
       },
     });
   } catch (error) {
+    if (typeof error === "object" && error !== null) {
+      const err = error as { status?: number; message?: string };
+      if(err.status === 429 || err.message?.includes("rate") || err.message?.includes("quota")) {
+        return new Response(JSON.stringify({ message: "You have reached the AI session limit for free tier use." }), { status: 200, headers: { "Content-Type": "application/json" } });
+      }
+    }
+    
     const { message, statusCode } = serverError("Error from /api/chat", "Invalid Request", "Invalid state", "aborted", "", error, 400, 400, 499, 0);
     return new Response(JSON.stringify({ message }), { status: statusCode, headers: { "Content-Type": "application/json" } });
   }

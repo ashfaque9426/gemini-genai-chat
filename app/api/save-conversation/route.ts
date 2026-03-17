@@ -56,7 +56,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         }
         else {
             const model = genAI.getGenerativeModel({
-                model: "gemini-3-flash-preview",
+                model: "gemini-2.0-flash-lite",
                 systemInstruction: "You are a title generator. Create a concise, catchy title (max 5 words) based on the user's input. Do not use quotes or markdown."
             });
 

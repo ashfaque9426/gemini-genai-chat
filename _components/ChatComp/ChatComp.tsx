@@ -195,6 +195,14 @@ export default function ChatComp({ chatCompStyles }: chatCompProps) {
         throw new Error("No response body found");
       }
 
+      const contentType = res.headers.get("content-type");
+
+      if (contentType?.includes("application/json")) {
+        const data = await res.json();
+        showToastMsg("info", data.message);
+        return;
+      }
+
       const reader = res.body!.getReader();
       const decoder = new TextDecoder();
 
